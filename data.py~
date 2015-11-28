@@ -1,0 +1,32 @@
+# coding:UTF-8
+
+import numpy as np
+
+import random
+
+trLabels = np.load('train-labels.npy')
+trVolume = np.load('train-volume.npy')
+
+def expend(mat, window):
+    row, col = mat.shape
+    reverse = range(window)[::-1]
+    ground = np.zeros((row+window*2, col+window*2))
+    ground[:window, :window] = np.rot90(mat[:window, :window], 2)
+    ground[:window, window:window+col] = mat[:window, :][reverse]
+    ground[:window, window+col:] = np.rot90(mat[:window, col-window:], 2)
+    ground[window:window+row, :window] = mat[:, :window][:, reverse]
+    ground[window:window+row, window:window+col] = mat[:, :]
+    ground[:, window+col:] = mat[:, col-window:][:, reverse]
+    ground[window+row:, :window] = np.rot90(mat[row-window:, :window], 2)
+    ground[window+row:, window:window+col] = mat[row-window:, :][reverse]
+    ground[window+row:, window+col:] = np.rot90(mat[row-window:, col-window:], 2)
+
+def crop(mat, window, x, y):
+    pass
+
+def getTrain(labels=trLabels, volume=trVolume, window=47, label=0, num=50000):
+    for (i, page) in enumerate(labels):
+        xs, ys = np.where(page == label)
+        ground = expend(volume[i], window)
+        for index in random.sample(range(len(xs)), num):
+            yield crop(ground, window, xs[index], ys[index])
