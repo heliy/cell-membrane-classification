@@ -29,7 +29,8 @@ def expend(mat, window):
 def crop(mat, window, x, y):
     return mat[x-window:x+window+1, y-window:y+window+1]
 
-def getSampleDot(labels=trLabels, volume=trVolume, window=47, label=0, num=50000):
+def getSampleDot(labels=trLabels, volume=trVolume, window=47, label=0, num=150000):
+    num = num // labels.shape[0]
     for (i, page) in enumerate(labels):
         xs, ys = np.where(page == label)
         ground = expend(volume[i], window)
