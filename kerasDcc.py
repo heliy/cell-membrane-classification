@@ -42,7 +42,7 @@ def train_model(model, num=2000, times=10):
         tx = shift(tx)
         vx = shift(vx)
         print("training ... ")
-        model.fit(tx, ty, validation_data=(vx, vy))
+        model.fit(tx, ty, nb_epoch=40, validation_data=(vx, vy))
         score = model.evaluate(tx, ty, show_accuracy=True)
         print("Train score: ", score[0])
         print("Train accuracy: ", score[1])
