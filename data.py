@@ -57,3 +57,6 @@ def load_data(window=95, positiveNum=50000, negativeNum=50000, rate=0.2):
             np.concatenate((trainY0, trainY255)),
             np.concatenate((validX0, validX255)),
             np.concatenate((validY0, validY255)))
+
+def shift(mx):
+    return mx.reshape((mx.shape[0], 1, mx.shape[1], mx.shape[2]))

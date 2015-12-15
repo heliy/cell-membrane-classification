@@ -7,7 +7,7 @@ from keras.layers.core import Dense, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.optimizers import SGD
 
-from data import load_data
+from data import load_data, shift
 
 def build_cnn(window_size=95):
     model = Sequential()
@@ -35,16 +35,26 @@ def build_cnn(window_size=95):
     model.compile(loss='categorical_crossentropy', optimizer=sgd)
     return model
 
-def train_model(model, num=800, times=10):
+def train_model(model, num=2000, times=10):
     for i in range(times):
         print(i, ":")
         (tx, ty, vx, vy) = load_data(positiveNum=num//2, negativeNum=num//2)
-        tx = tx.reshape((tx.shape[0], 1, tx.shape[1], tx.shape[2]))
-        vx = vx.reshape((vx.shape[0], 1, vx.shape[1], vx.shape[2]))
+        tx = shift(tx)
+        vx = shift(vx)
         print("training ... ")
         model.fit(tx, ty, validation_data=(vx, vy))
         score = model.evaluate(tx, ty, show_accuracy=True)
-        print("Test score: ", score[0])
-        print("Test accuracy: ", score[1])
+        print("Train score: ", score[0])
+        print("Train accuracy: ", score[1])
+        score = model.evaluate(vx, vy, show_accuracy=True)
+        print("Valid score: ", score[0])
+        print("Valid accuracy: ", score[1])
     return model
+
+def test_model(model, num=4000):
+    (tx, ty, vx, vy) = load_data(positiveNum=num//2, negativeNum=num//2, rate=0)
+    tx = shift(tx)
+    score = model.evaluate(tx, ty, show_accuracy=True)
+    print("Test score: ", score[0])
+    print("Test accuracy: ", score[1])
     
