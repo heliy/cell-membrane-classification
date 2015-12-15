@@ -52,27 +52,6 @@ def iterate_minibatches(inputs, targets, batchsize=batch_size, shuffle=False):
             excerpt = slice(idx, idx+batchsize)
         yield inputs[excerpt], targets[excerpt]
 
-def load_data(window=window, positiveNum=500000, negativeNum=500000, rate=0.2):
-    cropWindow = (window-1) // 2
-    
-    def mats(label, num):
-        train = np.array(list(getSampleDot(window=cropWindow, label=label, num=positiveNum)))
-        choose = np.random.rand(len(train)) > rate
-        return train[choose], train[np.logical_not(choose)]
-
-    
-    trainX0, validX0 = mats(0, positiveNum)
-    trainX255, validX255 = mats(255, negativeNum)
-    trainY0 = np.repeat([[0, 1]], [trainX0.shape[0]], axis=0)
-    validY0 = np.repeat([[0, 1]], [validX0.shape[0]], axis=0)
-    trainY255 = np.repeat([[1, 0]], [trainX255.shape[0]], axis=0)
-    validY255 = np.repeat([[1, 0]], [validX255.shape[0]], axis=0)
-
-    return (np.concatenate((trainX0, trainX255)),
-            np.concatenate((trainY0, trainY255)),
-            np.concatenate((validX0, validX255)),
-            np.concatenate((validY0, validY255)))
-
 def train(epoches=1000, learning_rate=0.1):
     print("build CNN...")
     input_var = T.tensor4('inputs')

@@ -36,3 +36,24 @@ def getSampleDot(labels=trLabels, volume=trVolume, window=47, label=0, num=15000
         ground = expend(volume[i], window)
         for index in random.sample(range(len(xs)), num):
             yield crop(ground, window, xs[index]+window, ys[index]+window)
+
+def load_data(window=95, positiveNum=50000, negativeNum=50000, rate=0.2):
+    cropWindow = (window-1) // 2
+    
+    def mats(label, num):
+        train = np.array(list(getSampleDot(window=cropWindow, label=label, num=positiveNum)))
+        choose = np.random.rand(len(train)) > rate
+        return train[choose], train[np.logical_not(choose)]
+
+    
+    trainX0, validX0 = mats(0, positiveNum)
+    trainX255, validX255 = mats(255, negativeNum)
+    trainY0 = np.repeat([[0, 1]], [trainX0.shape[0]], axis=0)
+    validY0 = np.repeat([[0, 1]], [validX0.shape[0]], axis=0)
+    trainY255 = np.repeat([[1, 0]], [trainX255.shape[0]], axis=0)
+    validY255 = np.repeat([[1, 0]], [validX255.shape[0]], axis=0)
+
+    return (np.concatenate((trainX0, trainX255)),
+            np.concatenate((trainY0, trainY255)),
+            np.concatenate((validX0, validX255)),
+            np.concatenate((validY0, validY255)))
