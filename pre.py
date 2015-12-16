@@ -1,4 +1,4 @@
-# coding:UTF-8
+#coding: UTF-8
 
 import random
 
@@ -6,8 +6,13 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 from scipy.interpolate import griddata
 
+import cv2
+
 trLabels = np.load('data/train-labels.npy')
 trVolume = np.load('data/train-volume.npy')
+
+def shift(mx):
+    return mx.reshape((mx.shape[0], 1, mx.shape[1], mx.shape[2]))
 
 def expend(mat, window):
     row, col = mat.shape
@@ -73,7 +78,7 @@ def foveate(mat, filters):
             foveated[i, j] = int(round((m*filter).sum()))
     return foveated
 
-def sampling_function(ground, window_size, ratio=1.3):
+def sampling_function(ground, window_size, ratio=1.5):
     window_large = int(window_size*ratio//2)*2
     X, Y = np.meshgrid(np.linspace(-1, 1, window_large), np.linspace(-1, 1, window_large))
     X_, Y_ = np.meshgrid(np.linspace(-1, 1, window_size), np.linspace(-1, 1, window_size))
@@ -83,39 +88,35 @@ def sampling_function(ground, window_size, ratio=1.3):
     window = window_large//2
     def func(i, j):
         m = ground[i+window_size-window:i+window_size+window, j+window_size-window:j+window_size+window]
-        print(x.shape, m.shape, xi.shape)
+        # print(x.shape, m.shape, xi.shape)
         # return x, m, xi
         return griddata(x, m.flat, xi, method='cubic').reshape((window_size, window_size))
     return func
 
-def getSampleDot(labels=trLabels, volume=trVolume, window=47, label=0, num=150000):
-    num = num // labels.shape[0]
-    for (i, page) in enumerate(labels):
-        xs, ys = np.where(page == label)
-        ground = expend(volume[i], window)
-        for index in random.sample(range(len(xs)), num):
-            pass
-            # yield crop(ground, window, xs[index]+window, ys[index]+window)
-
-def load_data(window=95, positiveNum=50000, negativeNum=50000, rate=0.2):
-    
-    def mats(label, num):
-        train = np.array(list(getSampleDot(window=window, label=label, num=positiveNum)))
-        choose = np.random.rand(len(train)) > rate
-        return train[choose], train[np.logical_not(choose)]
-
-    
-    trainX0, validX0 = mats(0, positiveNum)
-    trainX255, validX255 = mats(255, negativeNum)
-    trainY0 = np.repeat([[0, 1]], [trainX0.shape[0]], axis=0)
-    validY0 = np.repeat([[0, 1]], [validX0.shape[0]], axis=0)
-    trainY255 = np.repeat([[1, 0]], [trainX255.shape[0]], axis=0)
-    validY255 = np.repeat([[1, 0]], [validX255.shape[0]], axis=0)
-
-    return (np.concatenate((trainX0, trainX255)),
-            np.concatenate((trainY0, trainY255)),
-            np.concatenate((validX0, validX255)),
-            np.concatenate((validY0, validY255)))
-
-def shift(mx):
-    return mx.reshape((mx.shape[0], 1, mx.shape[1], mx.shape[2]))
+def pre_batch(window_size=95, batch_size=100000, ratio=0.5, sampling_ratio=2):
+    fils = filters(window_size)
+    store_x = np.zeros((batch_size, window_size, window_size))
+    store_y = np.zeros((batch_size, 2))
+    current, batch_num = 0, 0
+    for (volumes, labels) in zip(trLabels, trVolume):
+        ground = expend(volumes, window_size)
+        sampling = sampling_function(ground, window_size, sampling_ratio)
+        for i in range(volumes.shape[0]):
+            for j in range(volumes.shape[1]):
+                if random.random() > ratio:
+                    continue
+                mat = sampling(i, j).astype('int')
+                store_x[current, :, :] = random_rotate(foveate(mat, fils))
+                store_y[current, :] = labels[i, j] == 0 and [1, 0] or [0, 1]
+                current += 1
+                if current == batch_size:
+                    name = 'data/tmp/%d_%d_x' % (window_size, batch_num)
+                    np.save(name, store_x)
+                    name = 'data/tmp/%d_%d_y' % (window_size, batch_num)
+                    np.save(name, store_y)
+                    store_x[:, :, :] = 0
+                    store_y[:, :] = 0
+                    current = 0
+                    batch_num += 1
+                    print(batch_num, " batch ... ")
+                
