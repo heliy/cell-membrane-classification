@@ -26,8 +26,13 @@ def expend(mat, window):
     
     return ground
 
+def random_rotate(mat):
+    degree = random.randint(0, 3)
+    return np.rot90(mat, degree)
+
 def crop(mat, window, x, y):
-    return mat[x-window:x+window+1, y-window:y+window+1]
+    m = mat[x-window:x+window+1, y-window:y+window+1]
+    return random_rotate(m)
 
 def getSampleDot(labels=trLabels, volume=trVolume, window=47, label=0, num=150000):
     num = num // labels.shape[0]
