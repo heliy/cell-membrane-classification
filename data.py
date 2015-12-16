@@ -4,6 +4,7 @@ import random
 
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
+from scipy.interpolate import griddata
 
 trLabels = np.load('data/train-labels.npy')
 trVolume = np.load('data/train-volume.npy')
@@ -46,32 +47,46 @@ def gauss2D(shape=(3,3),sigma=0.5):
 def filters(window_size=95):
     filters = {}
     half = window_size//2
-    for i in range(center, half+1):
-        for j in range(center, half+1):
-            sigma = (2*max(i, j))/half
-            size = max(i//(2*center), i//(2*center))*2+1
+    sigmas = np.zeros((half+center, half+center))
+    for i in range(half+center):
+        for j in range(half+center):
+            sigma = ((7*max(i, j))/half)+0.001
+            sigmas[i, j] = sigma
+            size = max(i//(2*center), j//(2*center))*2+1
             filters[i*half+j] = gauss2D((size, size), sigma)
     return filters
 
-def foveate(mat, filters, window_size=95):
+def foveate(mat, filters):
+    window_size = mat.shape[0]
     foveated = mat.copy()
     half = window_size//2
-    fix_point = np.array(mat.shape)/2
+    fix_point = np.array(mat.shape)//2
+    mirror = expend(mat, half)
     for i in range(window_size):
         for j in range(window_size):
             ds = np.abs(np.array([i, j]) - fix_point)
-            if np.min(ds) < center:
+            if ds[0] < center and ds[1] < center:
                 continue
             filter = filters[int(ds[0]*half+ds[1])]
             size = filter.shape[0]//2
-            print(size, filter.shape)
-            return mat[i-size:i+size, j-size:j+size]
-            foveated[i, j] = int(mat[i-size:i+size, j-size:j+size]*filter)
+            m = mirror[half+i-size:half+i+size+1, half+j-size:half+j+size+1]
+            foveated[i, j] = int(round((m*filter).sum()))
     return foveated
 
-def crop(mat, window, x, y):
-    m = mat[x-window:x+window+1, y-window:y+window+1]
-    return random_rotate(m)
+def sampling_function(ground, window_size, ratio=1.3):
+    window_large = int(window_size*ratio//2)*2
+    X, Y = np.meshgrid(np.linspace(-1, 1, window_large), np.linspace(-1, 1, window_large))
+    X_, Y_ = np.meshgrid(np.linspace(-1, 1, window_size), np.linspace(-1, 1, window_size))
+    X_, Y_ = (3*X_**3+X_)/4, (3*Y_**3+Y_)/4
+    x = np.dstack((X, Y)).reshape((window_large**2, 2))
+    xi = np.dstack((X_, Y_)).reshape((window_size**2, 2))
+    window = window_large//2
+    def func(i, j):
+        m = ground[i+window_size-window:i+window_size+window, j+window_size-window:j+window_size+window]
+        print(x.shape, m.shape, xi.shape)
+        # return x, m, xi
+        return griddata(x, m.flat, xi, method='cubic').reshape((window_size, window_size))
+    return func
 
 def getSampleDot(labels=trLabels, volume=trVolume, window=47, label=0, num=150000):
     num = num // labels.shape[0]
@@ -79,13 +94,13 @@ def getSampleDot(labels=trLabels, volume=trVolume, window=47, label=0, num=15000
         xs, ys = np.where(page == label)
         ground = expend(volume[i], window)
         for index in random.sample(range(len(xs)), num):
-            yield crop(ground, window, xs[index]+window, ys[index]+window)
+            pass
+            # yield crop(ground, window, xs[index]+window, ys[index]+window)
 
 def load_data(window=95, positiveNum=50000, negativeNum=50000, rate=0.2):
-    cropWindow = (window-1) // 2
     
     def mats(label, num):
-        train = np.array(list(getSampleDot(window=cropWindow, label=label, num=positiveNum)))
+        train = np.array(list(getSampleDot(window=window, label=label, num=positiveNum)))
         choose = np.random.rand(len(train)) > rate
         return train[choose], train[np.logical_not(choose)]
 
