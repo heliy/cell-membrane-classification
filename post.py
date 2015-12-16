@@ -10,7 +10,7 @@ def cato(x):
     else:
         return 1
 
-def test(model, num, times):
+def test(model, num=300, times=30):
     c = 0
     for i in times:
         dots = getSampleDot(label=0, num=num)
