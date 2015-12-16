@@ -12,7 +12,7 @@ def cato(x):
 
 def test(model, num=300, times=30):
     c = 0
-    for i in times:
+    for i in range(times):
         dots = getSampleDot(label=0, num=num)
         dots = np.array(list(dots))        
         y = model.predict(shift(dots))
