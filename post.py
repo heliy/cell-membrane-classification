@@ -28,4 +28,4 @@ def test(model, num=300, times=30):
                 d += 1
         c += d
         print(i, ": ", d/(num*2))
-    return c/(num*times)
+    return c/(num*times*2)

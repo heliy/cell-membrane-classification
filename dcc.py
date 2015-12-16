@@ -8,48 +8,40 @@ from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.optimizers import SGD
 
 from data import load_data, shift
+from models import n4_orginal
 
-conAct = 'tanh'
-denAct = 'sigmoid'
+window_size = 95
+input_shape = (1, window_size, window_size)
 
-lr = 0.1
-
-nesterov = False
-dropout = 0
-
-
-def build_cnn(window_size=95):
+def build_cnn(model_setting=n4_orginal, input_shape=input_shape):
     model = Sequential()
-    
-    model.add(Convolution2D(48, 4, 4, input_shape=(1, window_size, window_size)))
-    model.add(Activation(conAct))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(dropout))
-    model.add(Convolution2D(48, 5, 5))
-    model.add(Activation(conAct))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(dropout))
-    model.add(Convolution2D(48, 4, 4))
-    model.add(Activation(conAct))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(dropout))
-    model.add(Convolution2D(48, 4, 4))
-    model.add(Activation(conAct))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(dropout))
+    conve_layers = model_setting['conve_layers']
+    pool_sizes = model_setting['pool_sizes']
+
+    model.add(Convolution2D(conve_layers[0][0], conve_layers[0][1], conve_layers[0][2], input_shape=input_shape))
+    model.add(Activation(model_setting['conve_activa']))
+    model.add(MaxPooling2D(pool_size=pool_sizes[0]))
+    model.add(Dropout(model_setting['dropout']))
+    for i in range(len(pool_sizes)-1):
+        i += 1
+        model.add(Convolution2D(conve_layers[i][0], conve_layers[i][1], conve_layers[i][2]))
+        model.add(Activation(model_setting['conve_activa']))
+        model.add(MaxPooling2D(pool_size=pool_sizes[i]))
+        model.add(Dropout(model_setting['dropout']))
 
     model.add(Flatten())
-    model.add(Dense(200))
-    model.add(Dropout(dropout))
-    model.add(Activation(denAct))
-    model.add(Dense(2))
-    model.add(Activation(denAct))
+    for n in model_setting['dense_layers'][:-1]:
+        model.add(Dense(n))
+        model.add(Activation(model_setting['dense_activa']))
+        model.add(Dropout(model_setting['dropout']))
+    model.add(Dense(model_setting['dense_layers'][-1]))
+    model.add(Activation(model_setting['dense_activa']))
 
-    sgd = SGD(lr=lr, nesterov=nesterov)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd)
+    sgd = SGD(lr=model_setting['lr'], nesterov=model_setting['nesterov'])
+    model.compile(loss=model_setting['loss'], optimizer=sgd)
     return model
 
-def train_model(model, num=3000, times=10, epoch=30):
+def train_model(model, num=3000, times=10, epoch=42):
     for i in range(times):
         print(i, ":")
         (tx, ty, vx, vy) = load_data(positiveNum=num//2, negativeNum=num//2)
