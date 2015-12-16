@@ -38,14 +38,14 @@ def build_cnn(window_size=95):
     model.compile(loss='categorical_crossentropy', optimizer=sgd)
     return model
 
-def train_model(model, num=2000, times=10):
+def train_model(model, num=2000, times=10, epoch=30):
     for i in range(times):
         print(i, ":")
         (tx, ty, vx, vy) = load_data(positiveNum=num//2, negativeNum=num//2)
         tx = shift(tx)
         vx = shift(vx)
         print("training ... ")
-        model.fit(tx, ty, nb_epoch=40, validation_data=(vx, vy))
+        model.fit(tx, ty, nb_epoch=epoch, validation_data=(vx, vy))
         score = model.evaluate(tx, ty, show_accuracy=True)
         print("Train score: ", score[0])
         print("Train accuracy: ", score[1])
