@@ -13,16 +13,19 @@ def cato(x):
 def test(model, num=300, times=30):
     c = 0
     for i in range(times):
+        d = 0
         dots = getSampleDot(label=0, num=num)
         dots = np.array(list(dots))        
         y = model.predict(shift(dots))
         for x in y:
-            if cato(y) == 0:
-                c += 1
+            if cato(x) == 0:
+                d += 1
         dots = getSampleDot(label=255, num=num)
         dots = np.array(list(dots))        
         y = model.predict(shift(dots))
         for x in y:
-            if cato(y) == 1:
-                c += 1
+            if cato(x) == 1:
+                d += 1
+        c += d
+        print(i, ": ", d/(num*2))
     return c/(num*times)
