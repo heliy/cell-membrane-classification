@@ -6,8 +6,6 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 from scipy.interpolate import griddata
 
-import cv2
-
 trLabels = np.load('data/train-labels.npy')
 trVolume = np.load('data/train-volume.npy')
 
