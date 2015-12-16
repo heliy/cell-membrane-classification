@@ -1,8 +1,9 @@
 # coding:UTF-8
 
-import numpy as np
-
 import random
+
+import numpy as np
+from scipy.ndimage.filters import gaussian_filter
 
 trLabels = np.load('data/train-labels.npy')
 trVolume = np.load('data/train-volume.npy')
@@ -29,6 +30,44 @@ def expend(mat, window):
 def random_rotate(mat):
     degree = random.randint(0, 3)
     return np.rot90(mat, degree)
+
+center = 4
+
+def gauss2D(shape=(3,3),sigma=0.5):
+    m,n = [(ss-1.)/2. for ss in shape]
+    y,x = np.ogrid[-m:m+1,-n:n+1]
+    h = np.exp( -(x*x + y*y) / (2.*sigma*sigma) )
+    h[ h < np.finfo(h.dtype).eps*h.max() ] = 0
+    sumh = h.sum()
+    if sumh != 0:
+        h /= sumh
+    return h
+
+def filters(window_size=95):
+    filters = {}
+    half = window_size//2
+    for i in range(center, half+1):
+        for j in range(center, half+1):
+            sigma = (2*max(i, j))/half
+            size = max(i//(2*center), i//(2*center))*2+1
+            filters[i*half+j] = gauss2D((size, size), sigma)
+    return filters
+
+def foveate(mat, filters, window_size=95):
+    foveated = mat.copy()
+    half = window_size//2
+    fix_point = np.array(mat.shape)/2
+    for i in range(window_size):
+        for j in range(window_size):
+            ds = np.abs(np.array([i, j]) - fix_point)
+            if np.min(ds) < center:
+                continue
+            filter = filters[int(ds[0]*half+ds[1])]
+            size = filter.shape[0]//2
+            print(size, filter.shape)
+            return mat[i-size:i+size, j-size:j+size]
+            foveated[i, j] = int(mat[i-size:i+size, j-size:j+size]*filter)
+    return foveated
 
 def crop(mat, window, x, y):
     m = mat[x-window:x+window+1, y-window:y+window+1]

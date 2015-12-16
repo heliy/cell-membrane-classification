@@ -8,15 +8,16 @@ from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.optimizers import SGD
 
 from data import load_data, shift
-from models import n4_orginal
+from models import n4
 
 window_size = 95
 input_shape = (1, window_size, window_size)
 
-def build_cnn(model_setting=n4_orginal, input_shape=input_shape):
+def build_cnn(model_setting=n4):
     model = Sequential()
     conve_layers = model_setting['conve_layers']
     pool_sizes = model_setting['pool_sizes']
+    input_shape = model_setting['input_shape']
 
     model.add(Convolution2D(conve_layers[0][0], conve_layers[0][1], conve_layers[0][2], input_shape=input_shape))
     model.add(Activation(model_setting['conve_activa']))
@@ -35,10 +36,9 @@ def build_cnn(model_setting=n4_orginal, input_shape=input_shape):
         model.add(Activation(model_setting['dense_activa']))
         model.add(Dropout(model_setting['dropout']))
     model.add(Dense(model_setting['dense_layers'][-1]))
-    model.add(Activation(model_setting['dense_activa']))
+    model.add(Activation('softmax'))
 
-    sgd = SGD(lr=model_setting['lr'], nesterov=model_setting['nesterov'])
-    model.compile(loss=model_setting['loss'], optimizer=sgd)
+    model.compile(loss=model_setting['loss'], optimizer=model_setting['optimizer'])
     return model
 
 def train_model(model, num=3000, times=10, epoch=42):

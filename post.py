@@ -10,7 +10,7 @@ def cato(x):
     else:
         return 1
 
-def test(model, num=300, times=30):
+def test(model, num=500, times=30):
     c = 0
     for i in range(times):
         d = 0
