@@ -92,7 +92,7 @@ def sampling_function(ground, window_size, ratio=1.5):
         return griddata(x, m.flat, xi, method='cubic').reshape((window_size, window_size))
     return func
 
-def batch_func(volumes, labels, window_size, batch_size, ratio, sampling_ratio):
+def batch_func(no, volumes, labels, window_size, batch_size, ratio, sampling_ratio):
     fils = filters(window_size)
     store_x = np.zeros((batch_size, window_size, window_size))
     store_y = np.zeros((batch_size, 2))
@@ -127,7 +127,7 @@ def batch_func(volumes, labels, window_size, batch_size, ratio, sampling_ratio):
 def map_batch(processes=4, window_size=95, batch_size=20000, ratio=0.3, sampling_ratio=2):
     l = trLabels.shape[0]
     with Pool(processes=processes) as pool:
-        pool.starmap(batch_func, zip(trVolume, trLabels, [window_size]*l, [batch_size]*l, [ratio]*l,
+        pool.starmap(batch_func, zip(range(l), trVolume, trLabels, [window_size]*l, [batch_size]*l, [ratio]*l,
                                      [sampling_ratio]*l))
         
     
