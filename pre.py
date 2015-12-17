@@ -110,7 +110,7 @@ def batch_func(no, volumes, labels, window_size, batch_size, ratio, sampling_rat
             if current%50 == 0:
                 print(current)
             if current == batch_size:
-                name = 'data/tmp/%d_%d_' % (window_size, batch_num)
+                name = 'data/tmp/%d_%d_%d_' % (window_size, no, batch_num)
                 np.save(name+"x", store_x)
                 np.save(name+"y", store_y)
                 store_x[:, :, :] = 0
@@ -119,7 +119,7 @@ def batch_func(no, volumes, labels, window_size, batch_size, ratio, sampling_rat
                 batch_num += 1
                 print(batch_num, " batch ... ")
         
-    name = 'data/tmp/%d_%d_' % (window_size, batch_num)
+    name = 'data/tmp/%d_%d_%d_' % (window_size, no, batch_num)
     np.save(name+"x", store_x)
     np.save(name+"y", store_y)
     return True
