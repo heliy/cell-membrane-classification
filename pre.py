@@ -1,6 +1,7 @@
 #coding: UTF-8
 
 import random
+from multiprocessing import Pool
 
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
@@ -91,30 +92,43 @@ def sampling_function(ground, window_size, ratio=1.5):
         return griddata(x, m.flat, xi, method='cubic').reshape((window_size, window_size))
     return func
 
-def pre_batch(window_size=95, batch_size=100000, ratio=0.5, sampling_ratio=2):
+def batch_func(volumes, labels, window_size, batch_size, ratio, sampling_ratio):
     fils = filters(window_size)
     store_x = np.zeros((batch_size, window_size, window_size))
     store_y = np.zeros((batch_size, 2))
     current, batch_num = 0, 0
-    for (volumes, labels) in zip(trLabels, trVolume):
-        ground = expend(volumes, window_size)
-        sampling = sampling_function(ground, window_size, sampling_ratio)
-        for i in range(volumes.shape[0]):
-            for j in range(volumes.shape[1]):
-                if random.random() > ratio:
-                    continue
-                mat = sampling(i, j).astype('int')
-                store_x[current, :, :] = random_rotate(foveate(mat, fils))
-                store_y[current, :] = labels[i, j] == 0 and [1, 0] or [0, 1]
-                current += 1
-                if current == batch_size:
-                    name = 'data/tmp/%d_%d_x' % (window_size, batch_num)
-                    np.save(name, store_x)
-                    name = 'data/tmp/%d_%d_y' % (window_size, batch_num)
-                    np.save(name, store_y)
-                    store_x[:, :, :] = 0
-                    store_y[:, :] = 0
-                    current = 0
-                    batch_num += 1
-                    print(batch_num, " batch ... ")
+    ground = expend(volumes, window_size)
+    sampling = sampling_function(ground, window_size, sampling_ratio)
+    for i in range(volumes.shape[0]):
+        for j in range(volumes.shape[1]):
+            if random.random() > ratio:
+                continue
+            mat = sampling(i, j).astype('int')
+            store_x[current, :, :] = random_rotate(foveate(mat, fils))
+            store_y[current, :] = labels[i, j] == 0 and [1, 0] or [0, 1]
+            current += 1
+            if current%50 == 0:
+                print(current)
+            if current == batch_size:
+                name = 'data/tmp/%d_%d_' % (window_size, batch_num)
+                np.save(name+"x", store_x)
+                np.save(name+"y", store_y)
+                store_x[:, :, :] = 0
+                store_y[:, :] = 0
+                current = 0
+                batch_num += 1
+                print(batch_num, " batch ... ")
+        
+    name = 'data/tmp/%d_%d_' % (window_size, batch_num)
+    np.save(name+"x", store_x)
+    np.save(name+"y", store_y)
+    return True
+
+def map_batch(processes=4, window_size=95, batch_size=20000, ratio=0.3, sampling_ratio=2):
+    l = trLabels.shape[0]
+    with Pool(processes=processes) as pool:
+        pool.starmap(batch_func, zip(trVolume, trLabels, [window_size]*l, [batch_size]*l, [ratio]*l,
+                                     [sampling_ratio]*l))
+        
+    
                 
