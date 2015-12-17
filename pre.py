@@ -117,6 +117,7 @@ def batch_func(no, volumes, labels, window_size, batch_size, ratio, sampling_rat
                 store_y[:, :] = 0
                 current = 0
                 batch_num += 1
+                print("write file: ", name)
                 print(batch_num, " batch ... ")
         
     name = 'data/tmp/%d_%d_%d_' % (window_size, no, batch_num)
