@@ -229,14 +229,14 @@ def get_ys(labels, points):
     func(range(points[0].shape[0]), points[0], points[1])
     return Y
 
-def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, batch_size=3000, ratio=0.3):
+def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, batch_size=30720, ratio=0.3):
     begin = time.time()
-    page_num = labels.shape[0]
     assert batch_size%page_num == 0
     assert window_size%2 == 1
     
     hasLabel = labels is not None
-    
+
+    page_num = volumes.shape[0]
     fils = filters(window_size)
     filter_edge = fils.shape[3]
     grounds = expend(volumes, window_size)
