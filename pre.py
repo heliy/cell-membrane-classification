@@ -43,10 +43,13 @@ def expend(mats, window):
     func(range(n))    
     return grounds
 
-@np.vectorize
 def random_rotate(mat):
-    degree = random.randint(0, 3)
-    return np.rot90(mat, degree)
+    @np.vectorize
+    def func(i, r):
+        mat[i] = np.rot90(mat[i], r)
+
+    func(range(mat.shape[0]), np.random.randint(0, 3, mat.shape[0]))
+    return mat
 
 center = 4
 
@@ -102,13 +105,6 @@ def foveate(mat, filters):
     X, Y = np.meshgrid(range(window_size), range(window_size))
     func(X, Y)
     return foveated
-
-def theano_foveate(mats, filter):
-    filter  = theano.shared(filter)
-    
-    
-    return func
-        
     
 def sampling_function(ground, window_size, ratio=1.5):
     window_large = int(window_size*ratio//2)*2
@@ -140,7 +136,7 @@ def crop(size, points, grounds):
     crop_points(range(xs.shape[0]), xs, ys)
     return mats
 
-def nonuni_sampling_template(from_size, to_size, subs_num=16, reserved=4):
+def nonuni_sampling_template(from_size, to_size, subs_num=16, reserved=10):
     assert from_size%2 == 1
     assert to_size%2 == 1
     assert subs_num%2 == 0
@@ -197,7 +193,50 @@ def nonuni_sampling(grounds, to_half_size):
     func(range(grounds.shape[0]))
     return mats, a
 
+def theano_foveate(mats, filts):
+    edge = filts.shape[2]//2
+    num = mats.shape[0]
+    window = mats.shape[1]-2*edge
+
+    filtereds = np.zeros((num, window, window))
+    filter_pis = (edge*2+1)**2
+
+    subs = T.matrix('subs').reshape((num, filter_pis))
+    filt = T.matrix('filter').reshape((filter_pis, 1))
+    resu = T.dot(subs, filt)
+
+    func = F(inputs=[subs, filt], outputs=[resu])
+
+    # for i in range(window):
+    #     for j in range(window):
+    #         m = theano.shared(mats[:, i:i+2*edge+1, j:j+2*edge+1].reshape((num, filter_pis)))
+    #         filter = theano.shared(filts[i, j].reshape((filter_pis, 1)))
+    #         filtereds[:, i, j] = func(m, filter)[0].get_value().reshape((num, 1)).astype('int')
+
+    @np.vectorize
+    def func(i, j):
+        m = mats[:, i:i+2*edge+1, j:j+2*edge+1].reshape((num, filter_pis))
+        f = filts[i, j].reshape((filter_pis, 1))
+        filtereds[:, i, j] = np.dot(m, f).astype('int').flatten()
+
+    X, Y = np.meshgrid(range(window), range(window))
+    func(X, Y)
+    return filtereds
+
+def get_ys(labels, points):
+    pages_num = labels.shape[0]
+    Y = np.zeros((points[0].shape[0]*pages_num, 2))
+
+    @np.vectorize
+    def func(i, x, y):
+        ys = [labels[l, x, y]== 0 and [1, 0] or [0, 1]for l in range(pages_num)]
+        Y[i*pages_num:(i+1)*pages_num] = np.array(ys).reshape((pages_num, 2))
+
+    func(range(points[0].shape[0]), points[0], points[1])
+    return Y
+
 def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, batch_size=300, ratio=0.3):
+    begin = time.time()
     page_num = labels.shape[0]
     assert batch_size%page_num == 0
     assert window_size%2 == 1
@@ -214,50 +253,61 @@ def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, bat
     print("total", batch_num, "batches")
     
     for batch_no in range(batch_num):
-        print(time.time())
         print("batch", batch_no, ": ")
         points_x = selected_x[batch_no*pages_batch_size:(batch_no+1)*pages_batch_size]
         points_y = selected_y[batch_no*pages_batch_size:(batch_no+1)*pages_batch_size]
+        print("cropping ...")
         mats = crop(window_size*2+1, (points_x+window_size, points_y+window_size), grounds)
-        mats = template_sampling(mats, window_size+filter_edge*2)
-        print(mats.shape)
-        
-    return grounds
-
-def batch_func(prefix, no, volumes, labels, window_size, batch_size, ratio, sampling_ratio):
-    fils = filters(window_size)
-    store_x = np.zeros((batch_size, window_size, window_size))
-    store_y = np.zeros((batch_size, 2))
-    ground = expend(volumes, window_size)
-    sampling = sampling_function(ground, window_size, sampling_ratio)
-    hasLabel = labels is not None
-
-    @np.vectorize
-    def func(i, j, cur):
-        mat = sampling(i, j).astype('int')
-        store_x[cur] = random_rotate(foveate(mat, fils))
-        if cur%50 == 0:
-            print(cur)
+        print("nonuniform sampling ...")
+        mats = template_sampling(mats, window_size+filter_edge-1)
+        print("foveate ...")
+        mats = theano_foveate(mats, fils)
+        print("rotate ...")
+        mats = random_rotate(mats)
+        name = "data/prefile/%s_%d_%d_%d_" % (prefix, window_size, batch_size, batch_no)
+        print("save in", name)
+        np.save(name+"x", mats)
         if hasLabel:
-            store_y[cur] = labels[i, j] == 0 and [1, 0] or [0, 1]
-
-    print(time.time())
-    X, Y = np.where(np.random.rand(labels.shape[0], labels.shape[1]) < ratio)
-    for batch_num in range(X.shape[0]//batch_size):
-        func(X[batch_num*batch_size: (batch_num+1)*batch_size],
-             Y[batch_num*batch_size: (batch_num+1)*batch_size],
-             range(batch_size))
-        name = 'data/tmp/%s_%d_%d_%d_' % (prefix, window_size, no, batch_num)
-        np.save(name+"x", store_x)
-        store_x.fill(0)
-        if hasLabel:
-            np.save(name+"y", store_y)
-            store_y.fill(0)
+            ys = get_ys(labels, (points_x, points_y))
+            np.save(name+"y", ys)
         print(time.time())
-        print("write file: ", name)
-        print(batch_num, " batch is OVER ... ")
+    print("begin:", begin)
+    print("end:", time.time())
+
+# def batch_func(prefix, no, volumes, labels, window_size, batch_size, ratio, sampling_ratio):
+#     fils = filters(window_size)
+#     store_x = np.zeros((batch_size, window_size, window_size))
+#     store_y = np.zeros((batch_size, 2))
+#     ground = expend(volumes, window_size)
+#     sampling = sampling_function(ground, window_size, sampling_ratio)
+#     hasLabel = labels is not None
+
+#     @np.vectorize
+#     def func(i, j, cur):
+#         mat = sampling(i, j).astype('int')
+#         store_x[cur] = random_rotate(foveate(mat, fils))
+#         if cur%50 == 0:
+#             print(cur)
+#         if hasLabel:
+#             store_y[cur] = labels[i, j] == 0 and [1, 0] or [0, 1]
+
+#     print(time.time())
+#     X, Y = np.where(np.random.rand(labels.shape[0], labels.shape[1]) < ratio)
+#     for batch_num in range(X.shape[0]//batch_size):
+#         func(X[batch_num*batch_size: (batch_num+1)*batch_size],
+#              Y[batch_num*batch_size: (batch_num+1)*batch_size],
+#              range(batch_size))
+#         name = 'data/tmp/%s_%d_%d_%d_' % (prefix, window_size, no, batch_num)
+#         np.save(name+"x", store_x)
+#         store_x.fill(0)
+#         if hasLabel:
+#             np.save(name+"y", store_y)
+#             store_y.fill(0)
+#         print(time.time())
+#         print("write file: ", name)
+#         print(batch_num, " batch is OVER ... ")
         
-    return True
+#     return True
 
 # def map_batch(processes=4, window_size=95, batch_size=20000, ratio=0.3, sampling_ratio=2):
 #     l = trLabels.shape[0]
