@@ -15,8 +15,6 @@ from theano import function as F
 from theano.ifelse import ifelse
 from theano.tensor.signal.conv import conv2d
 
-import cv2
-
 trLabels = np.load('data/train-labels.npy')
 trVolume = np.load('data/train-volume.npy')
 teVolume = np.load('data/test-volume.npy')
