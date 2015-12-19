@@ -252,16 +252,21 @@ def batch(use_theano=True, prefix="train", volumes=trVolume, labels=trLabels, wi
         points_x = selected_x[batch_no*pages_batch_size:(batch_no+1)*pages_batch_size]
         points_y = selected_y[batch_no*pages_batch_size:(batch_no+1)*pages_batch_size]
         print("cropping ...")
+        print(time.time())
         mats = crop(window_size*2+1, (points_x+window_size, points_y+window_size), grounds)
         print("nonuniform sampling ...")
+        print(time.time())
         mats = template_sampling(mats, window_size+filter_edge-1)
         print("foveate ...")
+        print(time.time())
         return mats, fils
         mats = theano_foveate(mats, fils, use_theano)
         print("rotate ...")
+        print(time.time())
         mats = random_rotate(mats)
         name = "data/prefile/%s_%d_%d_%d_" % (prefix, window_size, batch_size, batch_no)
         print("save in", name)
+        print(time.time())
         np.save(name+"x", mats)
         if hasLabel:
             ys = get_ys(labels, (points_x, points_y))
