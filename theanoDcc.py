@@ -4,7 +4,6 @@
 
 import timeit
 
-from data import getSampleDot
 from theanoUnit import ConvLayer, HiddenLayer, LogisticRegression
 
 import theano

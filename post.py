@@ -4,12 +4,17 @@ import numpy as np
 
 from data import getSampleDot, shift
 
+
+
 def cato(x):
     if x[0] < x[1]:
         return 0
     else:
         return 1
 
+def test(model, pages):
+    
+    
 def test(model, num=500, times=30):
     c = 0
     for i in range(times):

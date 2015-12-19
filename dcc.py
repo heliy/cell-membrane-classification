@@ -7,11 +7,14 @@ from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.optimizers import SGD
 
-from data import load_data, shift
+from pre import load_data
 from models import n4
 
 window_size = 95
 input_shape = (1, window_size, window_size)
+
+def shift(mx):
+    return mx.reshape((mx.shape[0], 1, mx.shape[1], mx.shape[2]))
 
 def build_cnn(model_setting=n4):
     model = Sequential()
