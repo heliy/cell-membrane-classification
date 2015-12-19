@@ -9,11 +9,11 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 from scipy.interpolate import griddata
 
-import theano
-import theano.tensor as T
-from theano import function as F
-from theano.ifelse import ifelse
-from theano.tensor.signal.conv import conv2d
+# import theano
+# import theano.tensor as T
+# from theano import function as F
+# from theano.ifelse import ifelse
+# from theano.tensor.signal.conv import conv2d
 
 trLabels = np.load('data/train-labels.npy')
 trVolume = np.load('data/train-volume.npy')
@@ -191,7 +191,7 @@ def nonuni_sampling(grounds, to_half_size):
     func(range(grounds.shape[0]))
     return mats, a
 
-def theano_foveate(mats, filts, use_theano=True):
+def batch_foveate(mats, filts):
     edge = filts.shape[2]//2
     num = mats.shape[0]
     window = mats.shape[1]-2*edge
@@ -199,20 +199,21 @@ def theano_foveate(mats, filts, use_theano=True):
     filtereds = np.zeros((num, window, window))
     filter_pis = (edge*2+1)**2
 
-    if use_theano:
-        for i in range(window):
-            for j in range(window):
-                m = theano.shared(mats[:, i:i+2*edge+1, j:j+2*edge+1].reshape((num, filter_pis)))
-                filter = theano.shared(filts[i, j].reshape((filter_pis, 1)))
-                filtereds[:, i, j] = T.dot(m, filter).eval().astype('int').flatten()
-    else:
-        @np.vectorize
-        def func(i, j):
-            m = mats[:, i:i+2*edge+1, j:j+2*edge+1].reshape((num, filter_pis))
-            f = filts[i, j].reshape((filter_pis, 1))
-            filtereds[:, i, j] = np.dot(m, f).astype('int').flatten()
-            X, Y = np.meshgrid(range(window), range(window))
-            func(X, Y)
+    # if use_theano:
+    #     for i in range(window):
+    #         for j in range(window):
+    #             m = theano.shared(mats[:, i:i+2*edge+1, j:j+2*edge+1].reshape((num, filter_pis)))
+    #             filter = theano.shared(filts[i, j].reshape((filter_pis, 1)))
+    #             filtereds[:, i, j] = T.dot(m, filter).eval().astype('int').flatten()
+    # else:
+    @np.vectorize
+    def func(i, j):
+        m = mats[:, i:i+2*edge+1, j:j+2*edge+1].reshape((num, filter_pis))
+        f = filts[i, j].reshape((filter_pis, 1))
+        filtereds[:, i, j] = np.dot(m, f).astype('int').flatten()
+        
+    X, Y = np.meshgrid(range(window), range(window))
+    func(X, Y)
             
     return filtereds
 
@@ -228,7 +229,7 @@ def get_ys(labels, points):
     func(range(points[0].shape[0]), points[0], points[1])
     return Y
 
-def batch(use_theano=True, prefix="train", volumes=trVolume, labels=trLabels, window_size=95, batch_size=300, ratio=0.3):
+def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, batch_size=3000, ratio=0.3):
     begin = time.time()
     page_num = labels.shape[0]
     assert batch_size%page_num == 0
@@ -259,7 +260,8 @@ def batch(use_theano=True, prefix="train", volumes=trVolume, labels=trLabels, wi
         mats = template_sampling(mats, window_size+filter_edge-1)
         print("foveate ...")
         print(time.time())
-        mats = theano_foveate(mats, fils, use_theano)
+        # return mats, fils
+        mats = batch_foveate(mats, fils)
         print("rotate ...")
         print(time.time())
         mats = random_rotate(mats)
