@@ -3,7 +3,7 @@
 \#*
 .\#*
 data/tmp/*.npy
-
+data/prefile/*.npy
 
 # py
 *.pyc
