@@ -259,7 +259,6 @@ def batch(use_theano=True, prefix="train", volumes=trVolume, labels=trLabels, wi
         mats = template_sampling(mats, window_size+filter_edge-1)
         print("foveate ...")
         print(time.time())
-        return mats, fils
         mats = theano_foveate(mats, fils, use_theano)
         print("rotate ...")
         print(time.time())
