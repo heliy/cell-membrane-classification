@@ -231,21 +231,20 @@ def get_ys(labels, points):
 
 def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, batch_size=30720, ratio=0.3):
     begin = time.time()
-    assert batch_size%page_num == 0
-    assert window_size%2 == 1
+    print("begin:", begin)
     
-    hasLabel = labels is not None
-
+    assert window_size%2 == 1
     page_num = volumes.shape[0]
+    assert batch_size%page_num == 0
     fils = filters(window_size)
     filter_edge = fils.shape[3]
     grounds = expend(volumes, window_size)
     
-    selected_x, selected_y = np.where(np.random.rand(labels.shape[1], labels.shape[2]) < ratio)
+    selected_x, selected_y = np.where(np.random.rand(volumes.shape[1], volumes.shape[2]) < ratio)
     batch_num = (selected_x.shape[0]*page_num)//batch_size
     pages_batch_size = batch_size//page_num
+    hasLabel = labels is not None
     print("total", batch_num, "batches")
-    print("begin:", begin)
     
     # def func(batch_no):
     for batch_no in range(batch_num):
