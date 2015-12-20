@@ -18,7 +18,7 @@ dir_prefix = 'data/prefile/'
 def shift(mx):
     return mx.reshape((mx.shape[0], 1, mx.shape[1], mx.shape[2]))
 
-def build(model_setting=n4):
+def build_cnn(model_setting=n4):
     model = Sequential()
     conve_layers = model_setting['conve_layers']
     pool_sizes = model_setting['pool_sizes']
