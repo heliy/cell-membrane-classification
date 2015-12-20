@@ -43,10 +43,11 @@ def build_cnn(model_setting=n4):
     model.add(Dense(model_setting['dense_layers'][-1]))
     model.add(Activation('softmax'))
 
-    model.compile(loss=model_setting['loss'], optimizer=model_setting['optimizer'])
+    sgd = SGD(nesterov=True)
+    model.compile(loss=model_setting['loss'], optimizer=sgd)
     return model
 
-def train(model, model_setting=n4, max_batches=500, every_batch=3, times=10, epoch=100):
+def train(model, model_setting=n4, max_batches=500, every_batch=10, times=10, epoch=100):
     window_size = model_setting['window_size']
     filename = "%s_%d_" % (train_prefix, window_size)
     files = list(filter(lambda x: filename in x, os.listdir(dir_prefix)))
@@ -75,8 +76,8 @@ def train(model, model_setting=n4, max_batches=500, every_batch=3, times=10, epo
                 Y[n*single_batch_size:(n+1)*single_batch_size] = np.load(dir_prefix+y)
             X = shift(X)
             print("training ... ")
-            model.fit(X, Y, nb_epoch=epoch)
-            score = model.evaluate(tx, ty, show_accuracy=True)
+            model.fit(X, Y, nb_epoch=epoch, verbose=1)
+            score = model.evaluate(tx, ty, show_accuracy=True, verbose=1)
             print("Train score: ", score[0])
             print("Train accuracy: ", score[1])
     return model
