@@ -47,7 +47,7 @@ def build_cnn(model_setting=n4):
     model.compile(loss=model_setting['loss'], optimizer=sgd)
     return model
 
-def train(model, model_setting=n4, max_batches=500, every_batch=10, times=10, epoch=100):
+def train(model, model_setting=n4, max_batches=1000, every_batch=20, times=10, epoch=100):
     window_size = model_setting['window_size']
     filename = "%s_%d_" % (train_prefix, window_size)
     files = list(filter(lambda x: filename in x, os.listdir(dir_prefix)))
@@ -102,6 +102,6 @@ def predict(model, model_setting=n4):
         print("predict ...")
         Y[batch_no*single_batch_size:(batch_no+1)*single_batch_size] = model.predict(X)
 
-    np.save("data/test_result_"+model[name], Y)
+    np.save("data/test_result_"+model_setting['name'], Y)
     return Y
     
