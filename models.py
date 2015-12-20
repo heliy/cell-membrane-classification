@@ -1,6 +1,7 @@
 #coding: UTF-8
 
 n1 = {
+    'name': 'n1',
     'window_size': 65,
     'input_shape': (1, 65, 65),
 
@@ -15,6 +16,7 @@ n1 = {
     }
 
 n4 = {
+    'name': 'n4',
     'window_size': 95,
     'input_shape': (1, 95, 95),
     

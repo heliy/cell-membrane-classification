@@ -230,6 +230,7 @@ def get_ys(labels, points):
     return Y
 
 def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, batch_size=30720, ratio=0.3):
+    ''' current preprocessing method '''
     begin = time.time()
     print("begin:", begin)
     
@@ -279,6 +280,8 @@ def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, bat
     print("begin:", begin)
     print("end:", time.time())
 
+# test: batch_size=7680 
+    
 # def batch_func(prefix, no, volumes, labels, window_size, batch_size, ratio, sampling_ratio):
 #     fils = filters(window_size)
 #     store_x = np.zeros((batch_size, window_size, window_size))
