@@ -229,7 +229,7 @@ def get_ys(labels, points):
     func(range(points[0].shape[0]), points[0], points[1])
     return Y
 
-def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, batch_size=30720, ratio=0.3):
+def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, batch_size=30720, ratio=0.3, alreadyget=0):
     ''' current preprocessing method '''
     begin = time.time()
     print("begin:", begin)
@@ -248,7 +248,7 @@ def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, bat
     print("total", batch_num, "batches")
     
     # def func(batch_no):
-    for batch_no in range(batch_num):
+    for batch_no in range(alreadyget, batch_num):
         print("batch", batch_no, ": ")
         points_x = selected_x[batch_no*pages_batch_size:(batch_no+1)*pages_batch_size]
         points_y = selected_y[batch_no*pages_batch_size:(batch_no+1)*pages_batch_size]
@@ -279,8 +279,10 @@ def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, bat
         
     print("begin:", begin)
     print("end:", time.time())
-
-# test: batch_size=7680 
+        
+    
+# test: batch_size=7680
+# train 95: already get 9
     
 # def batch_func(prefix, no, volumes, labels, window_size, batch_size, ratio, sampling_ratio):
 #     fils = filters(window_size)

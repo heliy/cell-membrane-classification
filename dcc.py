@@ -9,7 +9,9 @@ from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.optimizers import SGD
 
-from models import n4
+import mxnet as mx
+
+from models import n1
 
 train_prefix = "train"
 test_prefix = "test"
@@ -18,7 +20,64 @@ dir_prefix = 'data/prefile/'
 def shift(mx):
     return mx.reshape((mx.shape[0], 1, mx.shape[1], mx.shape[2]))
 
-def build_cnn(model_setting=n4):
+def mx_build(model_setting=n1):
+    conve_layers = model_setting['conve_layers']
+    pool_sizes = model_setting['pool_sizes']
+    input_shape = model_setting['input_shape']
+
+    data = mx.symbol.Variable('data')
+    pre = data
+    for (conv, pool) in zip(conve_layers, pool_sizes):
+        conv_layer = mx.symbol.Convolution(data=pre, kernel=tuple(conv[1:]), num_filter=conv[0])
+        acti_layer = mx.symbol.Activation(data=conv_layer, act_type=model_setting['conve_activa'])
+        pool_layer = mx.symbol.Pooling(data=acti_layer, pool_type='max', kernel=tuple(pool))
+        pre = mx.symbol.Dropout(data=pool_layer, p=model_setting['dropout'])
+
+    flatten = mx.symbol.Flatten(data=pre)
+    pre = flatten
+    for units in model_setting['dense_layers'][:-1]:
+        fc_layer = mx.symbol.FullyConnected(data=pre, num_hidden=units)
+        acti_layer = mx.symbol.Activation(data=conv_layer, act_type=model_setting['dense_activa'])
+        pre = mx.symbol.Dropout(data=pool_layer, p=model_setting['dropout'])
+        
+    last_layer = mx.symbol.FullyConnected(data=pre, num_hidden=model_setting['dense_layers'][-1])
+    network = mx.symbol.SoftmaxOutput(data=last_layer, name='softmax')
+    return network
+
+def mx_train(network, model_setting=n1, gpus=None, epoch=2000):
+    devs = mx.cpu() if gpus is None else [mx.gpu(int(i)) for i in gpus.split(',')]
+    window_size = model_setting['window_size']
+    filename = "%s%s_%d" % (dir_prefix, train_prefix, window_size)
+    
+    X = np.load(filename+"_1500_0_x.npy")
+    Y = np.load(filename+"_1500_0_y.npy")[:, 0]
+    X = shift(X)
+    
+    train = mx.io.NDArrayIter(
+        data = X,
+        label = Y,
+        # image = filename+"_x",
+        # label = filename+"_y",
+        batch_size = 500,
+        shuffle = True,
+        # last_batch_handle = 'discard',
+        )
+    model = mx.model.FeedForward(
+        ctx = devs,
+        symbol = network,
+        num_epoch = epoch,
+        learning_rate = 0.1,
+        numpy_batch_size = 20,
+        )
+    print(X.shape, Y.shape)
+    
+    model.fit(X=X, y=Y)
+    return model
+
+nn = mx_build()
+mx_train(nn)
+
+def keras_build(model_setting=n1):
     model = Sequential()
     conve_layers = model_setting['conve_layers']
     pool_sizes = model_setting['pool_sizes']
@@ -47,7 +106,7 @@ def build_cnn(model_setting=n4):
     model.compile(loss=model_setting['loss'], optimizer=sgd)
     return model
 
-def train(model, model_setting=n4, max_batches=1000, every_batch=20, times=10, epoch=100):
+def keras_train(model, model_setting=n1, max_batches=1000, every_batch=20, times=10, epoch=100):
     window_size = model_setting['window_size']
     filename = "%s_%d_" % (train_prefix, window_size)
     files = list(filter(lambda x: filename in x, os.listdir(dir_prefix)))
@@ -82,7 +141,7 @@ def train(model, model_setting=n4, max_batches=1000, every_batch=20, times=10, e
             print("Train accuracy: ", score[1])
     return model
 
-def predict(model, model_setting=n4):
+def keras_predict(model, model_setting=n1):
     window_size = model_setting['window_size']
     filename = "%s_%d_" % (test_prefix, window_size)
     files = list(filter(lambda x: filename in x and "_x." in x, os.listdir(dir_prefix)))

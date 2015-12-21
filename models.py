@@ -9,8 +9,8 @@ n1 = {
     'dropout': 0.1,
     'conve_activa': 'tanh',
     'dense_activa': 'sigmoid',
-    'conve_layers': [[48, 8, 8], [48, 4, 4], [48, 4, 4]],
-    'pool_sizes': [[2, 2], [2, 2], [2, 2]],
+    'conve_layers': [[48, 8, 8], [48, 8, 8]],
+    'pool_sizes': [[2, 2], [2, 2]],
     'dense_layers': [200, 2],    
     }
 

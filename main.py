@@ -11,7 +11,7 @@ if __name__ == '__main__':
     if arg == "pre 95 train":
         batch(batch_size=15000)
     elif arg == "pre 95 test":
-        batch("test", teVolume, None, 95, 7680, 1.1)
+        batch("test", teVolume, None, 95, 7680, 1.1, 9)
     elif arg == "dcc n1":
         model = build_cnn(n1)
         model = train(model, n1, 5000)
