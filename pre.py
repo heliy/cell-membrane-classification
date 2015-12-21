@@ -281,11 +281,8 @@ def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, bat
     print("end:", time.time())
         
 
-def append_sample(name="test255-2", LABEL=255, window_size=95, batch_size=15000, ratio=0.3, begin=500):
+def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=15000, ratio=0.3, begin=500):
     ''' extract more membrane samples'''
-    begin = time.time()
-    print("begin:", begin)
-    
     assert window_size%2 == 1
     page_num = 1
     assert batch_size%page_num == 0
@@ -297,9 +294,8 @@ def append_sample(name="test255-2", LABEL=255, window_size=95, batch_size=15000,
     for (volume, label, ground) in zip(trVolume, trLabels, grounds):
         mems = np.arange(volume.shape[0]*volume.shape[1]).flatten()[(label == LABEL).flatten()]
         selected_points = mems[np.random.rand(mems.shape[0]) < ratio]
-        selected_x = selected_points/volume.shape[0].astype("int")
-        selected_y = selected_points%volume.shape[0].astype('int')
-        return selected_x, selected_y
+        selected_x = (selected_points/volume.shape[0]).astype("int")
+        selected_y = (selected_points%volume.shape[0]).astype('int')
         batch_num = (selected_x.shape[0])//batch_size
         print("total", batch_num, "batches")
         for batch_no in range(batch_num):
@@ -319,7 +315,7 @@ def append_sample(name="test255-2", LABEL=255, window_size=95, batch_size=15000,
             print("rotate ...")
             print(time.time())
             mats = random_rotate(mats)
-            name = "data/prefile/%s_%d_%d_%d_" % (name, window_size, batch_size, batch+begin)
+            name = "data/prefile/%s_%d_%d_%d_" % (prefix, window_size, batch_size, batch+begin)
             print("save in", name)
             print(time.time())
             np.save(name+"x", mats)
