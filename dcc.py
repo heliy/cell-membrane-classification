@@ -74,10 +74,7 @@ def mx_train(network, model_setting=n1, gpus=None, epoch=2000):
     model.fit(X=X, y=Y)
     return model
 
-nn = mx_build()
-mx_train(nn)
-
-def keras_build(model_setting=n1):
+def build_cnn(model_setting=n1):
     model = Sequential()
     conve_layers = model_setting['conve_layers']
     pool_sizes = model_setting['pool_sizes']
@@ -106,7 +103,7 @@ def keras_build(model_setting=n1):
     model.compile(loss=model_setting['loss'], optimizer=sgd)
     return model
 
-def keras_train(model, model_setting=n1, max_batches=1000, every_batch=20, times=10, epoch=100):
+def train(model, model_setting=n1, max_batches=1000, every_batch=20, times=10, epoch=100):
     window_size = model_setting['window_size']
     filename = "%s_%d_" % (train_prefix, window_size)
     files = list(filter(lambda x: filename in x, os.listdir(dir_prefix)))
@@ -141,7 +138,7 @@ def keras_train(model, model_setting=n1, max_batches=1000, every_batch=20, times
             print("Train accuracy: ", score[1])
     return model
 
-def keras_predict(model, model_setting=n1):
+def predict(model, model_setting=n1):
     window_size = model_setting['window_size']
     filename = "%s_%d_" % (test_prefix, window_size)
     files = list(filter(lambda x: filename in x and "_x." in x, os.listdir(dir_prefix)))
