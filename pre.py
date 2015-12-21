@@ -294,9 +294,10 @@ def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=1500
     for (volume, label, ground) in zip(trVolume, trLabels, grounds):
         mems = np.arange(volume.shape[0]*volume.shape[1]).flatten()[(label == LABEL).flatten()]
         selected_points = mems[np.random.rand(mems.shape[0]) < ratio]
+        print(mems.shape, selected_points.shape)
         selected_x = (selected_points/volume.shape[0]).astype("int")
         selected_y = (selected_points%volume.shape[0]).astype('int')
-        batch_num = (selected_x.shape[0])//batch_size
+        batch_num = (selected_x.shape[0])//batch_size+1
         print("total", batch_num, "batches")
         for batch_no in range(batch_num):
             batch += 1
