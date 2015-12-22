@@ -318,7 +318,7 @@ def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=1500
             print("rotate ...")
             print(time.time())
             mats = random_rotate(mats)
-            name = "data/pre_balanced/%s_%d_%d_%d_" % (prefix, window_size, batch_size, batch+begin)
+            name = "data%s_%d_%d_%d_" % (prefix, window_size, batch_size, batch+begin)
             print("save in", name)
             print(time.time())
             np.save(name+"x", mats)
