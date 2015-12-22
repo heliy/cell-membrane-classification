@@ -281,7 +281,7 @@ def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, bat
     print("end:", time.time())
         
 
-def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=15000, ratio=0.3, begin=500):
+def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=15000, ratio=0.3, begin=500, hajimari=0):
     ''' extract more membrane samples'''
     assert window_size%2 == 1
     page_num = 1
@@ -301,6 +301,8 @@ def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=1500
         print("total", batch_num, "batches")
         for batch_no in range(batch_num):
             batch += 1
+            if batch < hajimari:
+                continue
             print("batch", batch, ": ")
             points_x = selected_x[batch_no*batch_size:(batch_no+1)*batch_size]
             points_y = selected_y[batch_no*batch_size:(batch_no+1)*batch_size]
@@ -316,7 +318,7 @@ def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=1500
             print("rotate ...")
             print(time.time())
             mats = random_rotate(mats)
-            name = "data/prefile/%s_%d_%d_%d_" % (prefix, window_size, batch_size, batch+begin)
+            name = "data/pre_balanced/%s_%d_%d_%d_" % (prefix, window_size, batch_size, batch+begin)
             print("save in", name)
             print(time.time())
             np.save(name+"x", mats)

@@ -11,11 +11,13 @@ if __name__ == '__main__':
     if arg == "pre 95 train":
         pre.batch(batch_size=15000)
     elif arg == "pre 95 test":
-        pre.batch("test", teVolume, None, 95, 7680, 1.1, 9)
+        pre.batch("test", teVolume, None, 95, 7680, 1.1, 710)
     elif arg == 'balance 65 255':
+        # white, not mem
         pre.dir_prefix = "data/pre_balanced"
         pre.append_sample(prefix="test255", LABEL=255, window_size=65, ratio=0.23, begin=0)
     elif arg == 'balance 65 0':
+        # black, is mem
         pre.dir_prefix = "data/pre_balanced"
         pre.append_sample(prefix="test0", LABEL=0, window_size=65, ratio=0.8, begin=0)
     elif arg == 'balance 95 255':
