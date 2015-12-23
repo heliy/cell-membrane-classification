@@ -15,14 +15,23 @@ def split_classes(dir, has_label=False):
     if has_label:
         os.system("mkdir '"+dir+"0'")
         os.system("mkdir '"+dir+"1'")
-        for (no, f) in enumerate(x_files):
-            X = np.load(dir+f)
-            Y = np.load(dir+f.replace("_x.", "_y."))[:, 0]
-            print(X.shape, Y.shape)
-            for (i, x, y) in zip(range(X.shape[0]), X, Y):
-                name = dir+str(int(y))+"/"+str(no)+"_"+str(i)+".png"
-                print(name)
+
+        ss0, ss1 = 0, 0
+        for f in filter(lambda x: 'train0' in x, x_files)
+            no = f.split("_")[3]
+            for (i, x) in enumerate(np.load(dir+f)):
+                name = "%s%s/%s_%d.png" % (dir, '0', no, i)
                 cv2.imwrite(name, x)
+            ss0 += i
+            print(f, ss0)
+        for f in filter(lambda x: 'train255' in x, x_files)
+            no = f.split("_")[3]
+            for (i, x) in enumerate(np.load(dir+f)):
+                name = "%s%s/%s_%d.png" % (dir, '1', no, i)
+                cv2.imwrite(name, x)
+            ss1 += i
+            print(f, ss1)
+        print(ss0, ss1)
     if not has_label:
         for (no, f) in enumerate(x_files):
             X = np.load(dir+f)
