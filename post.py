@@ -22,7 +22,7 @@ def tolist(data):
     for x in data:
         yield x
 
-def predict(model, npy_files, max_total_num):
+def predict(net, npy_files, max_total_num):
     ys = []
     for npyfile in npy_files:
         X = np.load(npyfile)
