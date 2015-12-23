@@ -30,4 +30,6 @@ def predict(net, npy_files):
         window_size = X.shape[1]
         X = X.reshape((X.shape[0], window_size, window_size, 1))
         ys.append(net.predict(list(gen(X))))
+    ys = np.array(ys)
+    return ys.reshape((ys.size//2, 2))
 
