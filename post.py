@@ -10,7 +10,7 @@ import numpy as np
 import caffe
 
 def load_model(model_dir, window_size=65, use_GPU=True):
-    model_file = [i if '.caffemodel' in i for i in os.listdir(model_dir)]
+    model_file = list(filter(lambda i: '.caffemodel' in i, os.listdir(model_dir)))[0]
     us_GPU and caffe.set_mode_gpu() or caffe.set_mode_cpu()
     net = caffe.Classifier(os.path.join(model_dir, 'deploy.prototxt'),
                            os.path.join(model_dir, model_file),
