@@ -18,16 +18,16 @@ def load_net(model_dir, window_size=65, use_GPU=True):
                            input_scale=1, raw_scale=255)
     return net
 
-def tolist(data):
+def gen(data):
     for x in data:
         yield x
 
-def predict(net, npy_files, max_total_num):
+def predict(net, npy_files):
     ys = []
     for npyfile in npy_files:
         X = np.load(npyfile)
         print npyfile, X.shape[0]
         window_size = X.shape[1]
         X = X.reshape((X.shape[0], window_size, window_size, 1))
-        ys.append(net.predict(tolist(X)))
+        ys.append(net.predict(list(gen(X))))
 
