@@ -6,6 +6,9 @@ import pre
 # from dcc import build_cnn, train, predict
 from models import *
 
+# label == 0 -> 1 -> is mem
+# label == 255 -> 0 -> is not mem
+
 if __name__ == '__main__':
     arg = sys.argv[1]
     # if arg == "pre 95 train":

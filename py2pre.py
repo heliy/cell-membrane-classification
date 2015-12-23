@@ -17,14 +17,14 @@ def split_classes(dir, has_label=False):
         os.system("mkdir '"+dir+"1'")
 
         ss0, ss1 = 0, 0
-        for f in filter(lambda x: 'train0' in x, x_files)
+        for f in filter(lambda x: 'train0' in x, x_files):
             no = f.split("_")[3]
             for (i, x) in enumerate(np.load(dir+f)):
                 name = "%s%s/%s_%d.png" % (dir, '0', no, i)
                 cv2.imwrite(name, x)
             ss0 += i
             print(f, ss0)
-        for f in filter(lambda x: 'train255' in x, x_files)
+        for f in filter(lambda x: 'train255' in x, x_files):
             no = f.split("_")[3]
             for (i, x) in enumerate(np.load(dir+f)):
                 name = "%s%s/%s_%d.png" % (dir, '1', no, i)
