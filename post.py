@@ -46,7 +46,7 @@ def leastsq_fit(Y, X):
 
     def eva(x):
         p = plsq[0]
-        return p[3]*(x**3)+p2*(x**2)+p1*x+p0
+        return p[3]*(x**3)+p[2]*(x**2)+p[1]*x+p[0]
 
     return eva
 
