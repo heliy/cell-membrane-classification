@@ -49,9 +49,10 @@ if __name__ == '__main__':
     #     predict(model, n4)
     elif arg == 'fit para':
         net = post.load_net("models/n1")
+        d = "/media/mmr6-raid5/hly/cell-mem-data/train_65/"
         files = filter(lambda x: '_x.' in x,
-                       os.listdir("/media/mmr6-raid5/hly/cell-mem-data/train_65"))
-        post.predict(net, files)
+                       os.listdir(d))
+        post.predict(net, [d+x for x in files])
     elif arg == "merge":
         pass
 
