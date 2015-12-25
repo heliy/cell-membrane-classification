@@ -35,7 +35,7 @@ def predict(net, npy_files):
     i = 1
     for f in npy_files:
         print "%d / %d" % (i, len(npy_files))
-        np.save(i.replace(".npy", "_result.npy"), __predict(net, f))
+        np.save(f.replace(".npy", "_result.npy"), __predict(net, f))
     
 def leastsq_fit(X, Y):
     def residuals(p, y, x):
