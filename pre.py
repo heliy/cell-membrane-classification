@@ -265,7 +265,7 @@ def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, bat
         print("rotate ...")
         print(time.time())
         mats = random_rotate(mats)
-        name = "data/prefile/%s_%d_%d_%d_" % (prefix, window_size, batch_size, batch_no)
+        name = "%s%s_%d_%d_%d_" % (dir_prefix, prefix, window_size, batch_size, batch_no)
         print("save in", name)
         print(time.time())
         np.save(name+"x", mats)
