@@ -25,7 +25,7 @@ def gen(data):
 
 def __predict(net, npyfile):
     X = np.load(npyfile)
-    print npyfile, X.shape[0]
+    print(npyfile, X.shape[0])
     window_size = X.shape[1]
     X = X.reshape((X.shape[0], window_size, window_size, 1))
     return net.predict(list(gen(X)))
@@ -34,7 +34,7 @@ def __predict(net, npyfile):
 def predict(net, npy_files):
     i = 1
     for f in npy_files:
-        print "%d / %d" % (i, len(npy_files))
+        print("%d / %d" % (i, len(npy_files)))
         np.save(f.replace(".npy", "_result.npy"), __predict(net, f))
     
 def leastsq_fit(X, Y):
