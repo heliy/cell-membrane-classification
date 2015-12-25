@@ -53,6 +53,30 @@ if __name__ == '__main__':
         files = filter(lambda x: '_x.' in x,
                        os.listdir(d))
         post.predict(net, [d+x for x in files])
+    elif arg == 'predict n1':
+        net = post.load_net("models/n1")
+        d = "/media/mmr6-raid5/hly/cell-mem-data/test_65/"
+        files = filter(lambda x: '_x.' in x,
+                       os.listdir(d))
+        post.predict(net, [d+x for x in files])        
+    elif arg == 'predict n2':
+        net = post.load_net("models/n2")
+        d = "/media/mmr6-raid5/hly/cell-mem-data/test_65/"
+        files = filter(lambda x: '_x.' in x,
+                       os.listdir(d))
+        post.predict(net, [d+x for x in files])        
+    elif arg == 'predict n3':
+        net = post.load_net("models/n3")
+        d = "/media/mmr6-raid5/hly/cell-mem-data/test_95/"
+        files = filter(lambda x: '_x.' in x,
+                       os.listdir(d))
+        post.predict(net, [d+x for x in files])        
+    elif arg == 'predict n4':
+        net = post.load_net("models/n4")
+        d = "/media/mmr6-raid5/hly/cell-mem-data/test_95/"
+        files = filter(lambda x: '_x.' in x,
+                       os.listdir(d))
+        post.predict(net, [d+x for x in files])        
     elif arg == "merge":
         pass
 
