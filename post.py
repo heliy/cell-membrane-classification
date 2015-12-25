@@ -32,11 +32,11 @@ def __predict(net, npyfile):
 
 
 def predict(net, npy_files):
-    batch_num = len(npy_files)//batch_size+1
     for i in npy_files:
+        print "%d / %d" % (i, len(npy_files))
         np.save(i.replace(".npy", "_result.npy"), __predict(net, i))
     
-def leastsq_fit(Y, X):
+def leastsq_fit(X, Y):
     def residuals(p, y, x):
         p3, p2, p1, p0 = p
         err = y - (p3*(x**3)+p2*(x**2)+p1*x+p0)

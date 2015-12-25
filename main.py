@@ -1,10 +1,12 @@
 #coding:UTF-8
 
 import sys
+import os
 
 import pre
 # from dcc import build_cnn, train, predict
 from models import *
+import post
 
 # label == 0 -> 1 -> is mem
 # label == 255 -> 0 -> is not mem
@@ -45,6 +47,11 @@ if __name__ == '__main__':
     #     model = build_cnn(n4)
     #     model = train(model, n4, 5000)
     #     predict(model, n4)
+    elif arg == 'fit para':
+        net = post.load_net("models/n1")
+        files = filter(lambda x: '_x.' in x,
+                       os.listdir("/media/mmr6-raid5/hly/cell-mem-data/train_65"))
+        post.predict(net, files)
     elif arg == "merge":
         pass
 
