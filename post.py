@@ -57,7 +57,7 @@ def batch_predict(postfix, net, npy_files):
             batch = X[batch_no*batch_size:(batch_no+1)*batch_size, :, :]
             batch = batch.reshape((batch_size, 1, window, window))
             net.blobs['data'].data[...] = batch
-            Y[batch_no*batch_size:(batch_no+1)*batch_size] = net.forward()
+            Y[batch_no*batch_size:(batch_no+1)*batch_size] = net.forward()['prob']
         name = f.replace(".npy", "_result_"+postfix+".npy")
         print("save in %s ..." % (name))
         np.save(name, Y)
