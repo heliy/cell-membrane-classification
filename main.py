@@ -28,7 +28,7 @@ if __name__ == '__main__':
         pre.batch("L1train", pre.trVolume[0].reshape((1, 512, 512)), None, 95, 4096, 1.1)
     if arg == 'post 95 test':
         pre.dir_prefix = "/media/mmr6-raid5/hly/cell-mem-data/test_95/"        
-        pre.batch("L1train", pre.teVolume[0].reshape((1, 512, 512)), None, 95, 4096, 1.1)
+        pre.batch("L1test", pre.teVolume[0].reshape((1, 512, 512)), None, 95, 4096, 1.1)
     # elif arg == 'balance 65 255':
     #     # white, not mem
     #     pre.dir_prefix = "/media/mmr6-raid5/hly/cell-mem-data/"
