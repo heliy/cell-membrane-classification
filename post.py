@@ -10,7 +10,7 @@ from scipy.optimize import leastsq
 
 import caffe
 
-def load_net(model_dir, window_size=65, gpu_id=None):
+def load_net(model_dir, gpu_id=None):
     model_file = list(filter(lambda i: '.caffemodel' in i, os.listdir(model_dir)))[0]
     if gpu_id is not None:
         caffe.set_mode_gpu()
@@ -39,7 +39,7 @@ def predict(prefix, net, npy_files):
         print("%d / %d" % (i, len(npy_files)))
         np.save(f.replace(".npy", "_result_"+prefix+".npy"), __predict(net, f))
 
-batch_size = 64
+batch_size = 128
         
 def batch_predict(postfix, net, npy_files):
     files_total = len(npy_files)
