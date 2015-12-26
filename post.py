@@ -10,11 +10,11 @@ from scipy.optimize import leastsq
 
 import caffe
 
-def load_net(model_dir, window_size=65, gpu_id=True):
+def load_net(model_dir, window_size=65, gpu_id=None):
     model_file = list(filter(lambda i: '.caffemodel' in i, os.listdir(model_dir)))[0]
-    if gpu_id is None:
+    if gpu_id is not None:
         caffe.set_mode_gpu()
-        caffe.setdevice(gpu_id)
+        caffe.set_device(gpu_id)
     else:
         caffe.set_mode_cpu()
     net = caffe.Net(os.path.join(model_dir, 'deploy.prototxt'), os.path.join(model_dir, model_file),
