@@ -39,7 +39,7 @@ def predict(prefix, net, npy_files):
         print("%d / %d" % (i, len(npy_files)))
         np.save(f.replace(".npy", "_result_"+prefix+".npy"), __predict(net, f))
 
-batch_size = 128
+batch_size = 256
         
 def batch_predict(postfix, net, npy_files):
     files_total = len(npy_files)
@@ -53,7 +53,7 @@ def batch_predict(postfix, net, npy_files):
         else:
             batch_num = int(X.shape[0]/batch_size)+1
         for batch_no in range(batch_num):
-            print("batch: %d / %d" % (batch_no, batch_num))
+            # print("batch: %d / %d" % (batch_no, batch_num))
             batch = X[batch_no*batch_size:(batch_no+1)*batch_size, :, :]
             batch = batch.reshape((batch_size, 1, window, window))
             net.blobs['data'].data[...] = batch
