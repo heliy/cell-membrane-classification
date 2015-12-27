@@ -99,7 +99,7 @@ def prob_eval(xfiles, yfiles, net_dir='models/n1', y_index=1, gpu_id=0):
         X = np.load(x)
         Y = np.load(y)
         y = batch_predict(net, X)
-        input_to_dict(y[:, y_index], Y[:, 0])
+        input_to_dict(y[:, y_index], Y[:, 0].astype('int'))
 
     X = prob_dict.keys()
     Y = np.array([float(prob_dict[x][1])/sum(prob_dict[x]) for x in X])
