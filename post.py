@@ -80,7 +80,7 @@ def leastsq_fit(X, Y, p0=[0.01, 0.01, 0.01, 0.01]):
 
     return eva
 
-def prob_eval(net_dir='models/n1', xfiles, yfiles, y_index=1, gpu_id=0):
+def prob_eval(xfiles, yfiles, net_dir='models/n1', y_index=1, gpu_id=0):
     '''
     y_index = 1 for n1/n2, = 0 for n3/n4
        as when we train the net, the first col in prob is different Orz.
