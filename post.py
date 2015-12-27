@@ -85,22 +85,25 @@ def prob_count(net, xfiles, yfiles, y_index=1, scale=10**6):
     y_index = 1 for n1/n2, = 0 for n3/n4
        as when we train the net, the first col in prob is different Orz.
     '''
-    probs = np.zeros((scale, 2))
-
-    @np.vectorize
-    def into_probs(predicted_y, real_y):
-        probs[predicted_y, real_y] += 1
+    probs_count = np.zeros((scale, 2))
     
     for (x, y) in zip(xfiles, yfiles):
         X = np.load(x)
         Y = np.load(y)
         predict = batch_predict(net, X)[:, y_index]
         predict = (predict*scale).astype('int')
-        into_probs(predict, Y[:, 0].astype('int'))
+        # not mem
+        probs = predict[Y[:, 0] == 0]
+        for p in np.uniq(probs):
+            probs_count[p][0] += np.where(probs == p)[0].shape[0]
+        # is mem
+        probs = predict[Y[:, 0] == 1]
+        for p in np.uniq(probs):
+            probs_count[p][1] += np.where(probs == p)[0].shape[0]
 
     X = np.arange(0, 1, 1./scale)
-    probs += 1./scale
-    Y = probs[:, 1]/probs.sum(axis=1)
+    probs_count += 1./scale
+    Y = probs_count[:, 1]/probs_count.sum(axis=1)
     return X, Y
 
 def threshold_filter(narray, threshold=0.01):
