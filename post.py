@@ -80,7 +80,7 @@ def leastsq_fit(X, Y, p0=[0.01, 0.01, 0.01, 0.01]):
 
     return eva
 
-def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7, up_threshold=0.9):
+def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7):
     '''
     y_index = 1 for n1/n2, = 0 for n3/n4
        as when we train the net, the first col in prob is different Orz.
@@ -88,6 +88,7 @@ def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7, up_threshold=0.9):
     probs_count = np.zeros((scale, 2))
     
     for (x, y) in zip(xfiles, yfiles):
+        print(x, y)
         X = np.load(x)
         Y = np.load(y)
         predict = batch_predict(net, X)[:, y_index]
