@@ -67,7 +67,7 @@ if __name__ == '__main__':
                        os.listdir(d))
         xfiles = [d+x for x in xfiles]
         yfiles = [x.replace('x', 'y') for x in xfiles]
-        prob = post.prob_count(net, xfiles[:130], yfiles[:130])
+        prob = post.prob_count(net, xfiles[:200], yfiles[:200])
         np.save("fitparaprob.npy", prob)
     elif arg == 'predict n1':
         net = post.load_net("models/n1")

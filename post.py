@@ -86,9 +86,10 @@ def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7):
        as when we train the net, the first col in prob is different Orz.
     '''
     probs_count = np.zeros((scale, 2))
+    total = len(xfiles)
     
-    for (x, y) in zip(xfiles, yfiles):
-        print(x, y)
+    for (i, x, y) in zip(range(total), xfiles, yfiles):
+        print("%s %d / %d", x, i, total)
         X = np.load(x)
         Y = np.load(y)
         predict = batch_predict(net, X)[:, y_index]
