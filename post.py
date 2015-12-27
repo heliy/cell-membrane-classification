@@ -111,4 +111,3 @@ def threshold_filter(narray, threshold=0.01):
     narray[idx] = threshold
     return narray
 
-def 
