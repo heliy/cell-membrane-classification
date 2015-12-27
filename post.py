@@ -101,6 +101,7 @@ def prob_eval(xfiles, yfiles, net_dir='models/n1', y_index=1, gpu_id=0):
         into_probs(predict, Y[:, 0].astype('int'))
 
     X = np.arange(0, 1, 1./scale)
+    probs += 1./scale
     Y = probs[:, 1]/probs.sum(axis=1)
     return probs, X, Y
     return leastsq_fit(X, Y), list(X), list(Y)
