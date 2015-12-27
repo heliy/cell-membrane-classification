@@ -94,11 +94,11 @@ def prob_count(net, xfiles, yfiles, y_index=1, scale=10**6):
         predict = (predict*scale).astype('int')
         # not mem
         probs = predict[Y[:, 0] == 0]
-        for p in np.uniq(probs):
+        for p in np.unique(probs):
             probs_count[p][0] += np.where(probs == p)[0].shape[0]
         # is mem
         probs = predict[Y[:, 0] == 1]
-        for p in np.uniq(probs):
+        for p in np.unique(probs):
             probs_count[p][1] += np.where(probs == p)[0].shape[0]
 
     X = np.arange(0, 1, 1./scale)
