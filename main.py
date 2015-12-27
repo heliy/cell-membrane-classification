@@ -2,6 +2,7 @@
 
 import sys
 import os
+import numpy as np
 
 import pre
 # from dcc import build_cnn, train, predict
@@ -60,11 +61,14 @@ if __name__ == '__main__':
     #     model = train(model, n4, 5000)
     #     predict(model, n4)
     elif arg == 'fit para':
-        net = post.load_net("models/n1")
+        net = post.load_net("models/n1", 0)
         d = "/media/mmr6-raid5/hly/cell-mem-data/train_65/"
-        files = filter(lambda x: '_x.' in x,
+        xfiles = filter(lambda x: '_x.' in x,
                        os.listdir(d))
-        post.predict(net, [d+x for x in files])
+        xfiles = [d+x for x in xfiles]
+        yfiles = [x.replace('x', 'y') for x in xfiles]
+        prob = post.prob_count(net, xfiles[:130], yfiles[:130])
+        np.save("fitparaprob.npy", prob)
     elif arg == 'predict n1':
         net = post.load_net("models/n1")
         d = "/media/mmr6-raid5/hly/cell-mem-data/test_65/"
