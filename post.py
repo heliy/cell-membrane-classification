@@ -40,25 +40,28 @@ def predict(prefix, net, npy_files):
         np.save(f.replace(".npy", "_result_"+prefix+".npy"), __predict(net, f))
 
 batch_size = 256
-        
-def batch_predict(postfix, net, npy_files):
+
+def batch_predict(net, X):
+    window = X.shape[1]
+    Y = np.zeros((X.shape[0], 2))
+    batch = np.zeros((batch_size, 1, window, window))
+    if X.shape[0] % batch_size == 0:
+        batch_num = int(X.shape[0]/batch_size)
+    else:
+        batch_num = int(X.shape[0]/batch_size)+1
+    for batch_no in range(batch_num):
+        x = X[batch_no*batch_size:(batch_no+1)*batch_size, :, :]
+        batch[:x.shape[0], :, :] = x.reshape((x.shape[0], 1, window, window))
+        net.blobs['data'].data[...] = batch    
+        Y[batch_no*batch_size:batch_no*batch_size+x.shape[0]] = net.forward()['prob']
+    return Y
+
+def save_predict(postfix, net, npy_files):
     files_total = len(npy_files)
     for (file_no, f) in enumerate(npy_files):
         print("file: %s, %d / %d" % (f, file_no, files_total))
         X = np.load(f)
-        window = X.shape[1]
-        Y = np.zeros((X.shape[0], 2))
-        if X.shape[0] % batch_size == 0:
-            batch_num = int(X.shape[0]/batch_size)
-        else:
-            batch_num = int(X.shape[0]/batch_size)+1
-        for batch_no in range(batch_num):
-            # print("batch: %d / %d" % (batch_no, batch_num))
-            batch = X[batch_no*batch_size:(batch_no+1)*batch_size, :, :]
-            if batch.shape[0]
-            batch = batch.reshape((batch_size, 1, window, window))
-            net.blobs['data'].data[...] = batch
-            Y[batch_no*batch_size:(batch_no+1)*batch_size] = net.forward()['prob']
+        Y = __batch_predict(X)
         name = f.replace(".npy", "_result_"+postfix+".npy")
         print("save in %s ..." % (name))
         np.save(name, Y)
