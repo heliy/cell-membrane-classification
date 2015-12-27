@@ -53,7 +53,7 @@ def batch_predict(net, X):
         x = X[batch_no*batch_size:(batch_no+1)*batch_size, :, :]
         batch[:x.shape[0], :, :] = x.reshape((x.shape[0], 1, window, window))
         net.blobs['data'].data[...] = batch    
-        Y[batch_no*batch_size:batch_no*batch_size+x.shape[0]] = net.forward()['prob']
+        Y[batch_no*batch_size:batch_no*batch_size+x.shape[0]] = net.forward()['prob'][:x.shape[0]]
     return Y
 
 def save_predict(postfix, net, npy_files):
