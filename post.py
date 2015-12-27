@@ -55,6 +55,7 @@ def batch_predict(postfix, net, npy_files):
         for batch_no in range(batch_num):
             # print("batch: %d / %d" % (batch_no, batch_num))
             batch = X[batch_no*batch_size:(batch_no+1)*batch_size, :, :]
+            if batch.shape[0]
             batch = batch.reshape((batch_size, 1, window, window))
             net.blobs['data'].data[...] = batch
             Y[batch_no*batch_size:(batch_no+1)*batch_size] = net.forward()['prob']
@@ -76,4 +77,10 @@ def leastsq_fit(X, Y):
         return p[3]*(x**3)+p[2]*(x**2)+p[1]*x+p[0]
 
     return eva
+
+def threshold_filter(narray, threshold=0.01):
+    '''if the value in narray < threshold, it will be setted as threshold'''
+    idx = narray < threshold
+    narray[idx] = threshold
+    return narray
 
