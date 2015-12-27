@@ -103,7 +103,7 @@ def prob_eval(xfiles, yfiles, net_dir='models/n1', y_index=1, gpu_id=0):
 
     X = prob_dict.keys()
     Y = np.array([float(prob_dict[x][1])/sum(prob_dict[x]) for x in X])
-    return leastsq_fit(X, Y)
+    return leastsq_fit(X, Y), X, Y
 
 def threshold_filter(narray, threshold=0.01):
     '''if the value in narray < threshold, it will be setted as threshold'''
