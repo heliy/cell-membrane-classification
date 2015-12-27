@@ -80,14 +80,12 @@ def leastsq_fit(X, Y, p0=[0.01, 0.01, 0.01, 0.01]):
 
     return eva
 
-def prob_eval(xfiles, yfiles, net_dir='models/n1', y_index=1, gpu_id=0):
+def prob_count(net, xfiles, yfiles, y_index=1, scale=10**6):
     '''
     y_index = 1 for n1/n2, = 0 for n3/n4
        as when we train the net, the first col in prob is different Orz.
     '''
-    scale = 1000
     probs = np.zeros((scale, 2))
-    net = load_net(net_dir, gpu_id)
 
     @np.vectorize
     def into_probs(predicted_y, real_y):
@@ -103,8 +101,7 @@ def prob_eval(xfiles, yfiles, net_dir='models/n1', y_index=1, gpu_id=0):
     X = np.arange(0, 1, 1./scale)
     probs += 1./scale
     Y = probs[:, 1]/probs.sum(axis=1)
-    return probs, X, Y
-    return leastsq_fit(X, Y), list(X), list(Y)
+    return X, Y
 
 def threshold_filter(narray, threshold=0.01):
     '''if the value in narray < threshold, it will be setted as threshold'''
