@@ -85,25 +85,25 @@ def prob_eval(xfiles, yfiles, net_dir='models/n1', y_index=1, gpu_id=0):
     y_index = 1 for n1/n2, = 0 for n3/n4
        as when we train the net, the first col in prob is different Orz.
     '''
-    prob_dict = {}
+    scale = 1000
+    probs = np.zeros((scale, 2))
     net = load_net(net_dir, gpu_id)
 
     @np.vectorize
-    def input_to_dict(predicted_y, real_y):
-        predict = int(predicted_y*10000)/10000.
-        if predict not in prob_dict:
-            prob_dict[predict] = [0, 0]
-        prob_dict[predict][real_y] += 1
+    def into_probs(predicted_y, real_y):
+        probs[predicted_y, real_y] += 1
     
     for (x, y) in zip(xfiles, yfiles):
         X = np.load(x)
         Y = np.load(y)
-        y = batch_predict(net, X)
-        input_to_dict(y[:, y_index], Y[:, 0].astype('int'))
+        predict = batch_predict(net, X)[:, y_index]
+        predict = (predict*scale).astype('int')
+        into_probs(predict, Y[:, 0].astype('int'))
 
-    X = prob_dict.keys()
-    Y = np.array([float(prob_dict[x][1])/sum(prob_dict[x]) for x in X])
-    return leastsq_fit(X, Y), X, Y
+    X = np.arange(0, 1, 1./scale)
+    Y = probs[:, 1]/probs.sum(axis=1)
+    return probs, X, Y
+    return leastsq_fit(X, Y), list(X), list(Y)
 
 def threshold_filter(narray, threshold=0.01):
     '''if the value in narray < threshold, it will be setted as threshold'''
