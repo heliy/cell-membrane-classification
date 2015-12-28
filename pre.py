@@ -253,9 +253,9 @@ def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, bat
         points_x = selected_x[batch_no*pages_batch_size:(batch_no+1)*pages_batch_size]
         points_y = selected_y[batch_no*pages_batch_size:(batch_no+1)*pages_batch_size]
         if do_any:
-            mats = crop(window_size*2+1, (points_x+window_size, points_y+window_size), grounds))
+            mats = crop(window_size*2+1, (points_x+window_size, points_y+window_size), grounds)
         else:
-            mats = crop(window_size, (points_x+window_size, points_y+window_size), grounds))
+            mats = crop(window_size, (points_x+window_size, points_y+window_size), grounds)
         if do_any:
             print("nonuniform sampling ...")
             print(time.time())
