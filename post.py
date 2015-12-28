@@ -75,33 +75,34 @@ def leastsq_fit(X, Y, p0=[0.01, 0.01, 0.01]):
     plsq = leastsq(residuals, p0, args=(Y, X))
     return plsq[0]
 
-def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7):
+def prob_count(net, xfiles, yfiles, scale=10**7):
     '''
     y_index = 1 for n1/n2, = 0 for n3/n4
        as when we train the net, the first col in prob is different Orz.
     '''
-    probs_count = np.zeros((scale+1, 2))
+    probs_count_0 = np.zeros((scale+1, 2))
+    probs_count_1 = np.zeros((scale+1, 2))
     total = len(xfiles)
     
     for (i, x, y) in zip(range(total), xfiles, yfiles):
         print("%s %d / %d" % (x, i, total))
         X = np.load(x)
         Y = np.load(y)
-        predict = batch_predict(net, X)[:, y_index]
+        predict = batch_predict(net, X)
         predict = (predict*scale).astype('int')
         # not mem
-        probs = predict[Y[:, 0] == 0]
+        probs = predict[:, 0][Y[:, 0] == 0]
         for p in np.unique(probs):
-            probs_count[p][0] += np.where(probs == p)[0].shape[0]
+            probs_count_0[p][0] += np.where(probs == p)[0].shape[0]
         # is mem
-        probs = predict[Y[:, 0] == 1]
+        probs = predict[:, 1][Y[:, 0] == 1]
         for p in np.unique(probs):
-            probs_count[p][1] += np.where(probs == p)[0].shape[0]
+            probs_count_1[p][1] += np.where(probs == p)[0].shape[0]
 
     # X = np.arange(0, 1, 1./scale)
     # probs_count += 1./scale
     # Y = probs_count[:, 1]/probs_count.sum(axis=1)
-    return probs_count
+    return probs_count_0, probs_count_1
 
 def prob_fit(probs_count, scale=10**5):
     pc = probs_count.reshape((scale, probs_count.shape[0]/scale, 2)).sum(1)
