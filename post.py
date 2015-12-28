@@ -80,7 +80,7 @@ def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7):
     y_index = 1 for n1/n2, = 0 for n3/n4
        as when we train the net, the first col in prob is different Orz.
     '''
-    probs_count = np.zeros((scale, 2))
+    probs_count = np.zeros((scale+1, 2))
     total = len(xfiles)
     
     for (i, x, y) in zip(range(total), xfiles, yfiles):
