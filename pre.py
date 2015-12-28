@@ -281,7 +281,7 @@ def batch(prefix="train", volumes=trVolume, labels=trLabels, window_size=95, bat
     print("end:", time.time())
         
 
-def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=3000, ratio=0.3, begin=500, hajimari=0):
+def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=3000, ratio=0.3, begin=500, hajimari=0, do_any=True):
     ''' extract more membrane samples'''
     assert window_size%2 == 1
     page_num = 1
@@ -308,13 +308,17 @@ def append_sample(prefix="test255-2", LABEL=255, window_size=95, batch_size=3000
             points_y = selected_y[batch_no*batch_size:(batch_no+1)*batch_size]
             print("cropping ...")
             print(time.time())
-            mats = crop(window_size*2+1, (points_x+window_size, points_y+window_size), np.array([ground]))
-            print("nonuniform sampling ...")
-            print(time.time())
-            mats = template_sampling(mats, window_size+filter_edge-1)
-            print("foveate ...")
-            print(time.time())
-            mats = batch_foveate(mats, fils)
+            if do_any:
+                mats = crop(window_size*2+1, (points_x+window_size, points_y+window_size), np.array([ground]))
+            else:
+                mats = crop(window_size, (points_x+window_size, points_y+window_size), np.array([ground]))
+            if do_any:
+                print("nonuniform sampling ...")
+                print(time.time())
+                mats = template_sampling(mats, window_size+filter_edge-1)
+                print("foveate ...")
+                print(time.time())
+                mats = batch_foveate(mats, fils)
             print("rotate ...")
             print(time.time())
             mats = random_rotate(mats)
