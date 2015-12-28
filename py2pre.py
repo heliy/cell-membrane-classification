@@ -31,7 +31,7 @@ def split_classes(x_files, has_label=False):
         print(ss0, ss1)
     if not has_label:
         for (no, f) in enumerate(x_files):
-            X = np.load(dir+f)
+            X = np.load(f)
             for (i, x) in zip(range(X.shape[0]), X):
                 cv2.imwrite(dir+str(no)+"_"+str(i)+".png", x)
             
