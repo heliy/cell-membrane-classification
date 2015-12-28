@@ -90,11 +90,19 @@ def prob_count(net, xfiles, yfiles, scale=10**7):
         Y = np.load(y)
         predict = batch_predict(net, X)
         predict = (predict*scale).astype('int')
-        # not mem
+        # col 0, not mem
         probs = predict[:, 0][Y[:, 0] == 0]
         for p in np.unique(probs):
             probs_count_0[p][0] += np.where(probs == p)[0].shape[0]
-        # is mem
+        # col 0, is mem
+        probs = predict[:, 0][Y[:, 0] == 1]
+        for p in np.unique(probs):
+            probs_count_0[p][1] += np.where(probs == p)[0].shape[0]
+        # col 1, not mem
+        probs = predict[:, 1][Y[:, 0] == 0]
+        for p in np.unique(probs):
+            probs_count_1[p][0] += np.where(probs == p)[0].shape[0]
+        # col 1, is mem
         probs = predict[:, 1][Y[:, 0] == 1]
         for p in np.unique(probs):
             probs_count_1[p][1] += np.where(probs == p)[0].shape[0]
