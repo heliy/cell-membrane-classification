@@ -61,7 +61,7 @@ def save_predict(postfix, net, npy_files):
     for (file_no, f) in enumerate(npy_files):
         print("file: %s, %d / %d" % (f, file_no, files_total))
         X = np.load(f)
-        Y = batch_predict(X)
+        Y = batch_predict(net, X)
         name = f.replace(".npy", "_result_"+postfix+".npy")
         print("save in %s ..." % (name))
         np.save(name, Y)
