@@ -67,10 +67,10 @@ def save_predict(postfix, net, npy_files):
         np.save(name, Y)
         
     
-def leastsq_fit(X, Y, p0=[0.01, 0.01, 0.01, 0.01]):
+def leastsq_fit(X, Y, p0=[0.01, 0.01, 0.01]):
     def residuals(p, y, x):
-        p3, p2, p1, p0 = p
-        err = y - (p3*(x**3)+p2*(x**2)+p1*x+p0)
+        p3, p2, p1 = p
+        err = y - (p3*(x**3)+p2*(x**2)+p1*x)
         return err
     plsq = leastsq(residuals, p0, args=(Y, X))
     return plsq[0]
@@ -103,13 +103,16 @@ def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7):
     # Y = probs_count[:, 1]/probs_count.sum(axis=1)
     return probs_count
 
-def prob_fit(probs_count):
-    idx = probs_count.sum(axis=1) != 0
-    X = np.arange(0, 1, 1./probs_count.shape[0])[idx]
-    Y = probs_count[idx]
-    return leastsq_fit(X, Y)
+def prob_fit(probs_count, scale=10**5):
+    pc = probs_count.reshape((scale, probs_count.shape[0]/scale, 2)).sum(1)
+    idx = pc.sum(axis=1) != 0
+    X = np.arange(0, 1, 1./pc.shape[0])[idx]
+    Y = pc[idx, 1]/pc[idx].sum(1)
+    return leastsq_fit(X, Y), X, Y
 
-prob_eval_p = np.array([ 2.29793248, -3.79739524,  2.00212631,  0.52655225])
+prob_eval_p0 = np.array([ 10.94442125, -17.46711456,   7.83811808])
+prob_eval_p1 = np.array([-3.52704756,  4.08572813])
+prob_eval_p2 = np.array([ 2.29793248, -3.79739524,  2.00212631,  0.52655225])
 
 def threshold_filter(narray, threshold=0.01):
     '''if the value in narray < threshold, it will be setted as threshold'''
@@ -117,14 +120,70 @@ def threshold_filter(narray, threshold=0.01):
     narray[idx] = threshold
     return narray
 
-def merge_result(npy_files, shape=(30, 512, 512), p_index=1):
+def merge_result(npy_files, shape=(30, 512, 512), load_index=1):
     result = np.zeros(shape)
     page_num = shape[0]
     loc = 0
     for f in npy_files:
-        x = np.load(f)[:, 1]
+        x = np.load(f)[:, load_index]
         assert x.shape[0] % page_num == 0
         for n in range(int(x.shape[0]/page_num)):
             result[:, int(loc/shape[1]), int(loc%shape[2])] = x[n*page_num:(n+1)*page_num]
             loc += 1
     return result
+
+def to_prob(X, p=prob_eval_p1):
+    k = X.flatten()
+    x = np.hstack((
+                   np.power(k, 3).reshape((k.shape[0], 1)),
+                   np.power(k, 2).reshape((k.shape[0], 1)),
+                   X.reshape((k.shape[0], 1)),
+                   # np.ones((k.shape[0], 1))
+                   ))
+    return p.dot(x.T).reshape(X.shape)
+
+def longest_increasing_idx(x):
+    X = x.flatten()
+    f = np.zeros(X.shape)
+    f[0] = 1
+    for i in range(1, X.shape[0]):
+        if X[i] >= X[i-1]:
+            f[i] = f[i-1]+1
+        else:
+            mae = np.where(X[:i] <= X[i])[0]
+            f[i] = mae.shape == (0,) and 1 or f[mae[-1]]+1
+    l = f.max()
+    idx = np.zeros(X.shape)
+    for i in range(X.shape[0]-1, -1, -1):
+        if f[i] == l:
+            maxidx = i
+            idx[maxidx] = True
+            break
+        else:
+            idx[i] = False
+    for i in range(maxidx-1, -1, -1):
+        if f[i] == f[maxidx]-1 and X[i] <= X[maxidx]:
+            idx[i] = True
+            maxidx = i
+        else:
+            idx[i] = False
+    return idx.astype('bool')
+
+# reference to
+# http://stackoverflow.com/questions/15191088/how-to-do-a-polynomial-fit-with-fixed-points
+def polyfit_with_fixed_points(n, x, y, xf, yf) :
+    mat = np.empty((n + 1 + len(xf),) * 2)
+    vec = np.empty((n + 1 + len(xf),))
+    x_n = x**np.arange(2 * n + 1)[:, None]
+    yx_n = np.sum(x_n[:n + 1] * y, axis=1)
+    x_n = np.sum(x_n, axis=1)
+    idx = np.arange(n + 1) + np.arange(n + 1)[:, None]
+    mat[:n + 1, :n + 1] = np.take(x_n, idx)
+    xf_n = xf**np.arange(n + 1)[:, None]
+    mat[:n + 1, n + 1:] = xf_n / 2
+    mat[n + 1:, :n + 1] = xf_n.T
+    mat[n + 1:, n + 1:] = 0
+    vec[:n + 1] = yx_n
+    vec[n + 1:] = yf
+    params = np.linalg.solve(mat, vec)
+    return params[:n + 1]
