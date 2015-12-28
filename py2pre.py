@@ -8,10 +8,7 @@ import sys
 import numpy as np
 import cv2
 
-def split_classes(dir, has_label=False):
-    files = os.listdir(dir)
-    x_files = list(filter(lambda x: '_x.npy' in x, files))
-    
+def split_classes(x_files, has_label=False):
     if has_label:
         os.system("mkdir '"+dir+"0'")
         os.system("mkdir '"+dir+"1'")
