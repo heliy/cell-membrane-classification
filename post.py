@@ -8,7 +8,7 @@ import os
 import numpy as np
 from scipy.optimize import leastsq
 
-import caffe
+# import caffe
 
 def load_net(model_dir, gpu_id=None):
     model_file = list(filter(lambda i: '.caffemodel' in i, os.listdir(model_dir)))[0]
@@ -73,12 +73,7 @@ def leastsq_fit(X, Y, p0=[0.01, 0.01, 0.01, 0.01]):
         err = y - (p3*(x**3)+p2*(x**2)+p1*x+p0)
         return err
     plsq = leastsq(residuals, p0, args=(Y, X))
-
-    def eva(x):
-        p = plsq[0]
-        return p[3]*(x**3)+p[2]*(x**2)+p[1]*x+p[0]
-
-    return eva
+    return plsq[0]
 
 def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7):
     '''
@@ -89,7 +84,7 @@ def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7):
     total = len(xfiles)
     
     for (i, x, y) in zip(range(total), xfiles, yfiles):
-        print("%s %d / %d", x, i, total)
+        print("%s %d / %d" % (x, i, total))
         X = np.load(x)
         Y = np.load(y)
         predict = batch_predict(net, X)[:, y_index]
@@ -108,9 +103,28 @@ def prob_count(net, xfiles, yfiles, y_index=1, scale=10**7):
     # Y = probs_count[:, 1]/probs_count.sum(axis=1)
     return probs_count
 
+def prob_fit(probs_count):
+    idx = probs_count.sum(axis=1) != 0
+    X = np.arange(0, 1, 1./probs_count.shape[0])[idx]
+    Y = probs_count[idx]
+    return leastsq_fit(X, Y)
+
+prob_eval_p = np.array([ 2.29793248, -3.79739524,  2.00212631,  0.52655225])
+
 def threshold_filter(narray, threshold=0.01):
     '''if the value in narray < threshold, it will be setted as threshold'''
     idx = narray < threshold
     narray[idx] = threshold
     return narray
 
+def merge_result(npy_files, shape=(30, 512, 512), p_index=1):
+    result = np.zeros(shape)
+    page_num = shape[0]
+    loc = 0
+    for f in npy_files:
+        x = np.load(f)[:, 1]
+        assert x.shape[0] % page_num == 0
+        for n in range(int(x.shape[0]/page_num)):
+            result[:, int(loc/shape[1]), int(loc%shape[2])] = x[n*page_num:(n+1)*page_num]
+            loc += 1
+    return result
