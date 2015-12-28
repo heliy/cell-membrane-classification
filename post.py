@@ -120,12 +120,12 @@ def threshold_filter(narray, threshold=0.01):
     narray[idx] = threshold
     return narray
 
-def merge_result(npy_files, shape=(30, 512, 512), load_index=1):
-    result = np.zeros(shape)
+def merge_result(npy_files, shape=[30, 512, 512]):
+    result = np.zeros(tuple(shape+[2]))
     page_num = shape[0]
     loc = 0
     for f in npy_files:
-        x = np.load(f)[:, load_index]
+        x = np.load(f)
         assert x.shape[0] % page_num == 0
         for n in range(int(x.shape[0]/page_num)):
             result[:, int(loc/shape[1]), int(loc%shape[2])] = x[n*page_num:(n+1)*page_num]
