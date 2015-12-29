@@ -137,7 +137,9 @@ def merge_result(npy_files, shape=[30, 512, 512]):
     result = np.zeros(tuple(shape+[2]))
     page_num = shape[0]
     loc = 0
-    for k in files_dict.keys().sorted():
+    keys = files_dict.keys()
+    keys.sort()
+    for k in keys:
         f = files_dict[k]
         print(k, f)
         x = np.load(f)
