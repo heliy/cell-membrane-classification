@@ -1,14 +1,14 @@
 #coding: UTF-8
 
-" py 2222222222222222222222222222222222222 "
-
-
 import os
 
 import numpy as np
 from scipy.optimize import leastsq
 
+import cv2
 # import caffe
+
+from pre import gauss2D, expend
 
 def load_net(model_dir, gpu_id=None):
     model_file = list(filter(lambda i: '.caffemodel' in i, os.listdir(model_dir)))[0]
@@ -67,14 +67,6 @@ def save_predict(postfix, net, npy_files):
         np.save(name, Y)
         
     
-def leastsq_fit(X, Y, p0=[0.01, 0.01, 0.01]):
-    def residuals(p, y, x):
-        p3, p2, p1 = p
-        err = y - (p3*(x**3)+p2*(x**2)+p1*x)
-        return err
-    plsq = leastsq(residuals, p0, args=(Y, X))
-    return plsq[0]
-
 def prob_count(net, xfiles, yfiles, scale=10**7):
     '''
     y_index = 1 for n1/n2, = 0 for n3/n4
@@ -112,16 +104,40 @@ def prob_count(net, xfiles, yfiles, scale=10**7):
     # Y = probs_count[:, 1]/probs_count.sum(axis=1)
     return probs_count_0, probs_count_1
 
-def prob_fit(probs_count, scale=10**5):
-    pc = probs_count.reshape((scale, probs_count.shape[0]/scale, 2)).sum(1)
-    idx = pc.sum(axis=1) != 0
-    X = np.arange(0, 1, 1./pc.shape[0])[idx]
-    Y = pc[idx, 1]/pc[idx].sum(1)
-    return leastsq_fit(X, Y), X, Y
+def poly_fit(X, Y, deg=3):
+    def residuals(p, y, x):
+        e = p.dot((np.array([np.power(x, i) for i in range(deg+1)])))
+        err = y - e
+        return err
+    p0 = [0.1]*(deg+1)
+    plsq = leastsq(residuals, p0, args=(Y, X))
+    return plsq[0]
 
-prob_eval_p0 = np.array([ 10.94442125, -17.46711456,   7.83811808])
-prob_eval_p1 = np.array([-3.52704756,  4.08572813])
-prob_eval_p2 = np.array([ 2.29793248, -3.79739524,  2.00212631,  0.52655225])
+prob_eval_p1 = np.array([ 0.61293427,  1.05949205, -1.61071239,  0.92506701])
+prob_eval_p0 = np.array([ 0.61293427,  1.05949205, -1.61071239,  0.92506701])
+
+def to_poly_prob(X, p=prob_eval_p1):
+    k = X.flatten()
+    deg = p.shape[0]
+    l = [np.power(k, i).reshape((k.shape[0], 1)) for i in range(deg)]
+    x = np.hstack(tuple(l))
+    print(x.shape)
+    return (p.dot(x.T)).reshape(X.shape)
+
+
+def log_fit(X, Y, p0=1):
+    def residuals(p, y, x):
+        err = y - p*np.log(x+1)
+        return err
+    plsq = leastsq(residuals, p0, args=(Y, X))
+    return plsq[0]
+
+def prob_fit(probs_count, threshold=3, scale=10**3, p_index=1):
+    pc = probs_count.reshape((scale, probs_count.shape[0]/scale, 2)).sum(1)
+    idx = pc.sum(axis=1) >= threshold
+    X = np.arange(0, 1, 1./pc.shape[0])[idx]
+    Y = pc[idx, p_index]/pc[idx].sum(1)
+    return poly_fit(X, Y), X, Y, idx
 
 def threshold_filter(narray, threshold=0.01):
     '''if the value in narray < threshold, it will be setted as threshold'''
@@ -148,16 +164,6 @@ def merge_result(npy_files, shape=[30, 512, 512]):
             result[:, int(loc/shape[1]), int(loc%shape[2])] = x[n*page_num:(n+1)*page_num]
             loc += 1
     return result
-
-def to_prob(X, p=prob_eval_p1):
-    k = X.flatten()
-    x = np.hstack((
-                   np.power(k, 3).reshape((k.shape[0], 1)),
-                   np.power(k, 2).reshape((k.shape[0], 1)),
-                   X.reshape((k.shape[0], 1)),
-                   # np.ones((k.shape[0], 1))
-                   ))
-    return p.dot(x.T).reshape(X.shape)
 
 def longest_increasing_idx(x):
     X = x.flatten()
@@ -186,21 +192,36 @@ def longest_increasing_idx(x):
             idx[i] = False
     return idx.astype('bool')
 
-# reference to
-# http://stackoverflow.com/questions/15191088/how-to-do-a-polynomial-fit-with-fixed-points
-def polyfit_with_fixed_points(n, x, y, xf, yf) :
-    mat = np.empty((n + 1 + len(xf),) * 2)
-    vec = np.empty((n + 1 + len(xf),))
-    x_n = x**np.arange(2 * n + 1)[:, None]
-    yx_n = np.sum(x_n[:n + 1] * y, axis=1)
-    x_n = np.sum(x_n, axis=1)
-    idx = np.arange(n + 1) + np.arange(n + 1)[:, None]
-    mat[:n + 1, :n + 1] = np.take(x_n, idx)
-    xf_n = xf**np.arange(n + 1)[:, None]
-    mat[:n + 1, n + 1:] = xf_n / 2
-    mat[n + 1:, :n + 1] = xf_n.T
-    mat[n + 1:, n + 1:] = 0
-    vec[:n + 1] = yx_n
-    vec[n + 1:] = yf
-    params = np.linalg.solve(mat, vec)
-    return params[:n + 1]
+def output2prob(a, threshold=0.0005):
+    r = to_poly_prob(a)
+    r[a < threshold] = 0
+    return r
+
+def prob_mean_filter(a, window_size=3):
+    assert window_size %2 == 1
+    half = int(window_size/2)
+    grounds = expend(a, window_size)
+    filtered = np.zeros(a.shape)
+    X, Y, Z = np.where(filtered == 0)
+    for (x, y, z) in zip(X, Y, Z):
+        filtered[x, y, z] = (grounds[x, window_size+y-half:window_size+y+half+1, window_size+z-half:window_size+z+half+1]).mean()
+        if filtered[x, y, z] != 0:
+            print(filtered[x, y, z])
+    return filtered
+
+def save_prob_png(prefix, a):
+    for i in range(a.shape[0]):
+        name = "%s_%d.png" % (prefix, i)
+        cv2.imwrite(name, a[i])
+
+def weights_ave(tup):
+    n = len(tup)
+    means = [i.mean() for i in tup]
+    t = reduce(lambda x, y: x*y, means)
+    weights = np.array([t/i for i in means])
+    weights /= weights.sum()
+    print(weights)
+    new = np.empty(tup[0].shape)
+    for i in range(n):
+        new += weights[i]*tup[i]
+    return new

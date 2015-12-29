@@ -4,6 +4,7 @@
 .\#*
 data/tmp/*.npy
 data/prefile/*.npy
+data/postfile/*.npy
 
 # py
 *.pyc
