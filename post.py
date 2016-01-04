@@ -6,11 +6,12 @@ import numpy as np
 from scipy.optimize import leastsq
 
 import cv2
-# import caffe
+import caffe
 
 from pre import gauss2D, expend
 
 def load_net(model_dir, gpu_id=None):
+    ''' load caffe model from model_dir '''
     model_file = list(filter(lambda i: '.caffemodel' in i, os.listdir(model_dir)))[0]
     if gpu_id is not None:
         caffe.set_mode_gpu()
@@ -21,27 +22,13 @@ def load_net(model_dir, gpu_id=None):
                     caffe.TEST)
     return net
 
-def gen(data):
-    for x in data:
-        yield x
-
-def __predict(net, npyfile):
-    X = np.load(npyfile)
-    print(npyfile, X.shape)
-    window_size = X.shape[1]
-    X = X.reshape((X.shape[0], window_size, window_size, 1))
-    return net.predict(list(gen(X)))
-
-
-def predict(prefix, net, npy_files):
-    i = 1
-    for f in npy_files:
-        print("%d / %d" % (i, len(npy_files)))
-        np.save(f.replace(".npy", "_result_"+prefix+".npy"), __predict(net, f))
-
+# batch size for inputting images
 batch_size = 256
 
 def batch_predict(net, X):
+    '''
+    using caffe model to predict data in X, input with batch images
+    '''
     window = X.shape[1]
     Y = np.zeros((X.shape[0], 2))
     batch = np.zeros((batch_size, 1, window, window))
@@ -57,6 +44,7 @@ def batch_predict(net, X):
     return Y
 
 def save_predict(postfix, net, npy_files):
+    ''' using caffe model to prefict data in npyfile '''
     files_total = len(npy_files)
     for (file_no, f) in enumerate(npy_files):
         print("file: %s, %d / %d" % (f, file_no, files_total))
@@ -69,8 +57,7 @@ def save_predict(postfix, net, npy_files):
     
 def prob_count(net, xfiles, yfiles, scale=10**7):
     '''
-    y_index = 1 for n1/n2, = 0 for n3/n4
-       as when we train the net, the first col in prob is different Orz.
+    count the probabilities from caffe model
     '''
     probs_count_0 = np.zeros((scale+1, 2))
     probs_count_1 = np.zeros((scale+1, 2))
@@ -105,6 +92,7 @@ def prob_count(net, xfiles, yfiles, scale=10**7):
     return probs_count_0, probs_count_1
 
 def poly_fit(X, Y, deg=3):
+    ''' polynomial fitting '''
     def residuals(p, y, x):
         e = p.dot((np.array([np.power(x, i) for i in range(deg+1)])))
         err = y - e
@@ -113,17 +101,15 @@ def poly_fit(X, Y, deg=3):
     plsq = leastsq(residuals, p0, args=(Y, X))
     return plsq[0]
 
-prob_eval_p1 = np.array([ 0.61293427,  1.05949205, -1.61071239,  0.92506701])
-prob_eval_p0 = np.array([ 0.61293427,  1.05949205, -1.61071239,  0.92506701])
+prob_eval_p = np.array([ 0.61293427,  1.05949205, -1.61071239,  0.92506701])
 
-def to_poly_prob(X, p=prob_eval_p1):
+def to_poly_prob(X, p=prob_eval_p):
+    ''' Caculate fitting '''
     k = X.flatten()
     deg = p.shape[0]
     l = [np.power(k, i).reshape((k.shape[0], 1)) for i in range(deg)]
     x = np.hstack(tuple(l))
-    print(x.shape)
     return (p.dot(x.T)).reshape(X.shape)
-
 
 def log_fit(X, Y, p0=1):
     def residuals(p, y, x):
@@ -133,11 +119,12 @@ def log_fit(X, Y, p0=1):
     return plsq[0]
 
 def prob_fit(probs_count, threshold=3, scale=10**3, p_index=1):
+    ''' polynomial fitting for probs '''
     pc = probs_count.reshape((scale, probs_count.shape[0]/scale, 2)).sum(1)
     idx = pc.sum(axis=1) >= threshold
     X = np.arange(0, 1, 1./pc.shape[0])[idx]
     Y = pc[idx, p_index]/pc[idx].sum(1)
-    return poly_fit(X, Y), X, Y, idx
+    return poly_fit(X, Y)
 
 def threshold_filter(narray, threshold=0.01):
     '''if the value in narray < threshold, it will be setted as threshold'''
@@ -146,6 +133,7 @@ def threshold_filter(narray, threshold=0.01):
     return narray
 
 def merge_result(npy_files, shape=[30, 512, 512]):
+    ''' get the result from numpy.array files'''
     files_dict = {}
     for f in npy_files:
         no = int(f.split("/")[-1].split("_")[3])
@@ -193,6 +181,7 @@ def longest_increasing_idx(x):
     return idx.astype('bool')
 
 def output2prob(a, threshold=0.0005):
+    ''' from output to probabilities '''
     r = to_poly_prob(a)
     r[a < threshold] = 0
     return r
@@ -226,6 +215,3 @@ def weights_ave(tup):
         new += weights[i]*tup[i]
     return new
 
-def pixerr(a, l):
-    n = l.copy()
-    n[l == 255] = 1
