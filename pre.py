@@ -4,7 +4,6 @@
 preprocessing for image data
 '''
 
-
 import sys
 import time
 import random
