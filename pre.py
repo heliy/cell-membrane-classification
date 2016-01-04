@@ -1,5 +1,10 @@
 #coding: UTF-8
 
+'''
+preprocessing for image data
+'''
+
+
 import sys
 import time
 import random
@@ -15,11 +20,26 @@ from scipy.interpolate import griddata
 # from theano.ifelse import ifelse
 # from theano.tensor.signal.conv import conv2d
 
+# data
 trLabels = np.load('data/train-labels.npy')
 trVolume = np.load('data/train-volume.npy')
 teVolume = np.load('data/test-volume.npy')
 
 def expend(mats, window):
+    '''
+    Mirroring images with a size of window
+
+    Parameters
+    ----------
+    mats : numpy array, shape (K, R, C)
+         the mats of K images, with shape is R x C
+    window : int
+         the size of window to mirror
+
+    Returns:
+    ----------
+    return_value : numpy array, shape (K, R+2*window, C+2*window)
+    '''
     n, row, col = mats.shape
     reverse = range(window)[::-1]
     grounds = np.zeros((n, row+window*2, col+window*2)).astype('int')
@@ -41,14 +61,30 @@ def expend(mats, window):
     func(range(n))    
     return grounds
 
-def random_rotate(mat):
+def random_rotate(mats):
+    '''
+    Rotate images randomly
+    1/4 +90 ; 1/4 +180; 1/4 +270
+
+    Parameters
+    ---------
+    mats : numpy array, shape(K, N, N)
+         the mats of K images, with shape is N x N
+
+    Returns:
+    ---------
+    return_value: numpy array, shape(K, N, N)
+    '''
+    assert len(mats.shape) == 3 and mats.shape[1] == mats.shape[2]
+    ns = np.empty(mats.shape)
     @np.vectorize
     def func(i, r):
-        mat[i] = np.rot90(mat[i], r)
+        ns[i] = np.rot90(mats[i], r)
 
-    func(range(mat.shape[0]), np.random.randint(0, 3, mat.shape[0]))
-    return mat
+    func(range(mats.shape[0]), np.random.randint(0, 3, mats.shape[0]))
+    return ns
 
+# 
 center = 4
 
 def gauss2D(shape=(3,3),sigma=0.5):

@@ -2,9 +2,11 @@
 *~
 \#*
 .\#*
-data/tmp/*.npy
-data/prefile/*.npy
-data/postfile/*.npy
+data/tmp/*
+data/prefile/*
+data/postfile/*
+data/imgs/*
+*.ppt
 
 # py
 *.pyc

@@ -225,3 +225,7 @@ def weights_ave(tup):
     for i in range(n):
         new += weights[i]*tup[i]
     return new
+
+def pixerr(a, l):
+    n = l.copy()
+    n[l == 255] = 1
