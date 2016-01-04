@@ -1,13 +1,15 @@
 #coding:UTF-8
 
+''' main processing for training and processing'''
+
 import sys
 import os
 import numpy as np
 
-import pre
+from .. import pre
 # from dcc import build_cnn, train, predict
 # from models import *
-import post
+from .. import post
 
 # label == 0 -> 1 -> is mem
 # label == 255 -> 0 -> is not mem
