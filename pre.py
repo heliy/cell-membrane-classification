@@ -20,6 +20,8 @@ from scipy.interpolate import griddata
 # from theano.ifelse import ifelse
 # from theano.tensor.signal.conv import conv2d
 
+import cv2
+
 # data
 trLabels = np.load('data/train-labels.npy')
 trVolume = np.load('data/train-volume.npy')
@@ -498,6 +500,33 @@ def map_batch(processes=4, window_size=95, batch_size=20000, ratio=0.3, sampling
                                      np.repeat(ratio, l), np.repeat(sampling_ratio, l))
         pool.starmap(batch_func, z)
 
+def split_classes(x_files, has_label=False):
+    if has_label:
+        os.system("mkdir '"+dir+"0'")
+        os.system("mkdir '"+dir+"1'")
+
+        ss0, ss1 = 0, 0
+        for f in filter(lambda x: 'train0' in x, x_files):
+            no = f.split("_")[3]
+            for (i, x) in enumerate(np.load(dir+f)):
+                name = "%s%s/%s_%d.png" % (dir, '0', no, i)
+                cv2.imwrite(name, x)
+            ss0 += i
+            print(f, ss0)
+        for f in filter(lambda x: 'train255' in x, x_files):
+            no = f.split("_")[3]
+            for (i, x) in enumerate(np.load(dir+f)):
+                name = "%s%s/%s_%d.png" % (dir, '1', no, i)
+                cv2.imwrite(name, x)
+            ss1 += i
+            print(f, ss1)
+        print(ss0, ss1)
+    if not has_label:
+        for (no, f) in enumerate(x_files):
+            X = np.load(f)
+            for (i, x) in zip(range(X.shape[0]), X):
+                cv2.imwrite(dir+str(no)+"_"+str(i)+".png", x)
+        
 # if __name__ == '__main__':
 #     p, w = sys.argv[1:]
 #     map_batch(int(p), int(w))
